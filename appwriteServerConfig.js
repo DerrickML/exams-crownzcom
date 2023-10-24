@@ -1,5 +1,5 @@
 // Importing required modules and dotenv package
-import { Client, Users, Account } from "node-appwrite";
+import { Client, Users, Account, Databases } from "node-appwrite";
 
 // Init SDK
 const client = new Client()
@@ -10,5 +10,18 @@ const client = new Client()
   ); // Setting your secret API key from env var
 const account = new Account(client);
 const users = new Users(client);
+const databases = new Databases(client);
 
-export { client, account, users };
+const database_id = "651417820a07629ea837";
+const studentTable_id = "65420efe2297cbf6acf0";
+const parentsTable_id = "6544c4d66694e7b9dc3a";
+
+export {
+  client,
+  account,
+  users,
+  databases,
+  database_id,
+  studentTable_id,
+  parentsTable_id
+};
