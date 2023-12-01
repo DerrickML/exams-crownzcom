@@ -39,6 +39,14 @@ app.use(express.json());
 // Serving static files from 'public' directory
 app.use(express.static(path.join(process.cwd(), "public")));
 
+// ===== EMAIL SETUP =====
+/************************************************/
+// Acumbamail SMTP server credentials
+const acumbamailUser = process.env.acumbamailUser;
+const acumbamailSender = process.env.acumbamailSender;
+const acumbamailPass = process.env.acumbamailPass;
+/************************************************/
+
 // ===== ROUTE HANDLERS =====
 /*ROUTE: Sends a static password to use on the client for a user that doesn't exist*/
 app.get("/get-password", (req, res) => {
