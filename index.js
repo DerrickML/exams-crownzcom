@@ -10,6 +10,9 @@ import {
   users,
   account,
   databases,
+  c_client,
+  c_account,
+  c_databases,
   database_id,
   studentTable_id,
   parentsTable_id,
@@ -155,6 +158,33 @@ app.post("/delete-user", async (req, res) => {
     res.status(500).json({ errors }); // Send back any errors that occurred
   } else {
     res.send("Users deleted successfully");
+  }
+});
+
+/*ROUTE: Create account of the Next of Kin*/
+app.post("/create-next-of-kin", async (req, res) => {
+  try {
+    const { email, firstName, phone } = req.body;
+    let response;
+
+    if (email) {
+      // Create account with email
+      response = await c_account.create(
+        "unique()",
+        email,
+        "study@1234",
+        firstName,
+      );
+    } else if (phone) {
+      // Create account with phone
+      response = await c_account.createPhoneSession("unique()", phone);
+    }
+
+    console.log("Next of Kin account created:", response);
+    res.json(response);
+  } catch (error) {
+    console.error("Error in creating Next of Kin account:", error);
+    res.status(500).send("Internal Server Error");
   }
 });
 
