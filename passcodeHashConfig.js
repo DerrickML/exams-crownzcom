@@ -1,7 +1,6 @@
 import crypto from "crypto";
 
-const ENCRYPTION_KEY =
-  "41df024d6e080b90d6b2c03816793613a52e5a54d5ca7d6fad39fc8a3e339c58";
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
 
 /***********************************************/
 // ENCRYPTION AND DECRYPTION
