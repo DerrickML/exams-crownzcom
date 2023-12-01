@@ -18,7 +18,7 @@ import {
   parentsTable_id,
 } from "./appwriteServerConfig.js";
 import { ENCRYPTION_KEY, encrypt } from "./passcodeHashConfig.js";
-import { gmailUser, transporter } from "./emailConfig.js";
+import { sendEmail } from "./emailConfig.js";
 
 // Initializing Express app
 const app = express();
@@ -39,13 +39,10 @@ app.use(express.json());
 // Serving static files from 'public' directory
 app.use(express.static(path.join(process.cwd(), "public")));
 
-// ===== EMAIL SETUP =====
-/************************************************/
-// Acumbamail SMTP server credentials
-const acumbamailUser = process.env.acumbamailUser;
-const acumbamailSender = process.env.acumbamailSender;
-const acumbamailPass = process.env.acumbamailPass;
-/************************************************/
+// Generate random password
+function generateSecurePassword(length = 12) {
+  return crypto.randomBytes(length).toString("hex").slice(0, length);
+}
 
 // ===== ROUTE HANDLERS =====
 /*ROUTE: Sends a static password to use on the client for a user that doesn't exist*/
@@ -173,18 +170,24 @@ app.post("/delete-user", async (req, res) => {
 app.post("/create-next-of-kin", async (req, res) => {
   try {
     const { email, firstName, phone } = req.body;
+    let password = generateSecurePassword();
     let response;
 
     if (email) {
-      // Create account with email
-      response = await c_account.create(
-        "unique()",
-        email,
-        "study@1234",
-        firstName,
-      );
+      response = await c_account.create("unique()", email, password, firstName);
+
+      // Attempt to send an email
+      try {
+        await sendEmail(
+          email,
+          "Account Created",
+          `Hello ${firstName},<br>Your account has been created. Your password is: ${password}`,
+        );
+      } catch (emailError) {
+        console.error("Email sending failed:", emailError);
+        // Decide how to handle email failures (e.g., log the error, inform the user)
+      }
     } else if (phone) {
-      // Create account with phone
       response = await c_account.createPhoneSession("unique()", phone);
     }
 
