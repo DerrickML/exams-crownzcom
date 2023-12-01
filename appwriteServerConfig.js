@@ -12,7 +12,7 @@ import {
 // Init  server side SDK
 const client = new Client()
   .setEndpoint("https://cloud.appwrite.io/v1") // Setting your Appwrite endpoint from env var
-  .setProject("651413f38aee140189c2") // Setting your project ID from env var
+  .setProject(process.env.APPWRITE_PROJECT_ID) // Setting your project ID from env var
   .setKey(process.env.APPWRITE_API_KEY); // Setting your secret API key from env var
 const account = new Account(client);
 const users = new Users(client);
