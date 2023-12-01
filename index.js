@@ -44,6 +44,24 @@ function generateSecurePassword(length = 12) {
   return crypto.randomBytes(length).toString("hex").slice(0, length);
 }
 
+function createKinEmailMessage(kinName, studentName, password) {
+  return `
+    <div style="font-family: Arial, sans-serif; color: #333;">
+      <h2 style="color: #4A90E2;">Welcome to Student Progress Tracker!</h2>
+      <p>Hello <strong>${kinName}</strong>,</p>
+      <p>We are excited to inform you that <strong>${studentName}</strong> has added you as their Next of Kin on our platform. This role is crucial in monitoring and supporting their educational journey.</p>
+      <p>Your account details are as follows:</p>
+      <ul>
+        <li>Email: <strong>${kinName}</strong></li>
+        <li>Password: <strong>${password}</strong> (Please change this on your first login)</li>
+      </ul>
+      <p>As a Next of Kin, you'll have access to view their academic progress, including quiz and exam scores. This is a great opportunity to stay involved and offer support where needed.</p>
+      <p>Should you have any questions or require assistance, please don't hesitate to contact us.</p>
+      <p>Best regards,</p>
+      <p><strong>The Student Progress Tracker Team</strong></p>
+    </div>
+  `;
+}
 // ===== ROUTE HANDLERS =====
 /*ROUTE: Sends a static password to use on the client for a user that doesn't exist*/
 app.get("/get-password", (req, res) => {
@@ -169,7 +187,7 @@ app.post("/delete-user", async (req, res) => {
 /*ROUTE: Create account of the Next of Kin*/
 app.post("/create-next-of-kin", async (req, res) => {
   try {
-    const { email, firstName, phone } = req.body;
+    const { email, firstName, phone, studentName } = req.body;
     let password = generateSecurePassword();
     let response;
 
@@ -178,17 +196,23 @@ app.post("/create-next-of-kin", async (req, res) => {
 
       // Attempt to send an email
       try {
+        const emailMessage = createKinEmailMessage(
+          email,
+          firstName,
+          studentName,
+          password,
+        );
         await sendEmail(
           email,
-          "Account Created",
-          `Hello ${firstName},<br>Your account has been created. Your password is: ${password}`,
+          "Welcome to Student Progress Tracker!",
+          emailMessage,
         );
       } catch (emailError) {
         console.error("Email sending failed:", emailError);
-        // Decide how to handle email failures (e.g., log the error, inform the user)
       }
     } else if (phone) {
       response = await c_account.createPhoneSession("unique()", phone);
+      // Decide how to handle email failures (e.g., log the error, inform the user)
     }
 
     console.log("Next of Kin account created:", response);
