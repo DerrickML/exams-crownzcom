@@ -5,6 +5,7 @@ import crypto from "crypto";
 import express from "express";
 import cors from "cors";
 import path from "path";
+import dotenv from "dotenv"
 import {
   client,
   users,
@@ -19,6 +20,8 @@ import {
 } from "./appwriteServerConfig.js";
 import { ENCRYPTION_KEY, encrypt } from "./passcodeHashConfig.js";
 import { sendEmail } from "./emailConfig.js";
+
+dotenv.config();
 
 // Initializing Express app
 const app = express();
@@ -197,7 +200,6 @@ app.post("/create-next-of-kin", async (req, res) => {
       // Attempt to send an email
       try {
         const emailMessage = createKinEmailMessage(
-          email,
           firstName,
           studentName,
           password,

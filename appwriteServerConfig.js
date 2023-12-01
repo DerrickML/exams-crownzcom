@@ -9,6 +9,9 @@ import {
   Query as cQuery,
 } from "appwrite";
 
+import dotenv from "dotenv"
+dotenv.config();
+
 // Init  server side SDK
 const client = new Client()
   .setEndpoint(process.env.APPWRITE_ENDPOINT) // Setting your Appwrite endpoint from env var
