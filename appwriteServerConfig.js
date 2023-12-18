@@ -9,7 +9,7 @@ import {
   Query as cQuery,
 } from "appwrite";
 
-import dotenv from "dotenv"
+import dotenv from "dotenv";
 dotenv.config();
 
 // Init  server side SDK
@@ -31,8 +31,8 @@ const c_databases = new cDatabases(c_client);
 
 // Database and collection IDs
 const database_id = "651417820a07629ea837";
-const studentTable_id = "65420efe2297cbf6acf0";
-const parentsTable_id = "6544c4d66694e7b9dc3a";
+const studentTable_id = "657065f7dddd996bf19b";
+const parentsTable_id = "65706739032c0962d0a9";
 
 export {
   client,

@@ -5,7 +5,7 @@ import crypto from "crypto";
 import express from "express";
 import cors from "cors";
 import path from "path";
-import dotenv from "dotenv"
+import dotenv from "dotenv";
 import {
   client,
   users,
@@ -65,6 +65,25 @@ function createKinEmailMessage(kinName, studentName, password) {
     </div>
   `;
 }
+
+// Function to update labels
+async function updateLabel(userId, labels) {
+  try {
+    return await users.updateLabels(userId, labels);
+  } catch (error) {
+    throw error; // Rethrow the error to handle it in the route
+  }
+}
+
+//Function to return user account details
+async function getUserDetails(userId) {
+  try {
+    return await users.get(userId);
+  } catch (error) {
+    throw error; // Rethrow the error to handle it in the route
+  }
+}
+
 // ===== ROUTE HANDLERS =====
 /*ROUTE: Sends a static password to use on the client for a user that doesn't exist*/
 app.get("/get-password", (req, res) => {
@@ -191,12 +210,22 @@ app.post("/delete-user", async (req, res) => {
 app.post("/create-next-of-kin", async (req, res) => {
   try {
     const { email, firstName, phone, studentName } = req.body;
+    if (!email && !phone) {
+      return res
+        .status(400)
+        .send(
+          "Please provide either an email or phone number for the next of kin.",
+        );
+    }
     let password = generateSecurePassword();
-    let response;
+    let response, accountResponse;
+    const kinLabel = ["kin"];
 
     if (email) {
       response = await c_account.create("unique()", email, password, firstName);
-
+      console.log("Kin ID: ", response.$id);
+      await updateLabel(response.$id, kinLabel);
+      accountResponse = await getUserDetails(response.$id);
       // Attempt to send an email
       try {
         const emailMessage = createKinEmailMessage(
@@ -214,11 +243,13 @@ app.post("/create-next-of-kin", async (req, res) => {
       }
     } else if (phone) {
       response = await c_account.createPhoneSession("unique()", phone);
-      // Decide how to handle email failures (e.g., log the error, inform the user)
+      console.log("Kin ID From Phone: ", response.userId);
+      await updateLabel(response.userId, kinLabel);
+      accountResponse = await getUserDetails(response.userId);
     }
 
-    console.log("Next of Kin account created:", response);
-    res.json(response);
+    console.log("Next of Kin account created:", accountResponse);
+    res.json(accountResponse);
   } catch (error) {
     console.error("Error in creating Next of Kin account:", error);
     res.status(500).send("Internal Server Error");
@@ -227,18 +258,10 @@ app.post("/create-next-of-kin", async (req, res) => {
 
 /*ROUTE: Add Created New Parent account to Parents' Collection*/
 app.post("/createParentDoc", async (req, res) => {
-  const { parent_ID, firstName, secondName, email, phoneNumber, passCode } =
-    req.body;
+  const { kinID, firstName, lastName, email, phone, passCode } = req.body;
 
   // Basic validation
-  if (
-    !parent_ID ||
-    !firstName ||
-    !secondName ||
-    !email ||
-    !phoneNumber ||
-    !passCode
-  ) {
+  if (!parent_ID || !firstName || !lastName || !email || !phone || !passCode) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
@@ -246,11 +269,11 @@ app.post("/createParentDoc", async (req, res) => {
     const encryptedPassCode = encrypt(passCode);
 
     await databases.createDocument(database_id, parentsTable_id, "unique()", {
-      parID: parent_ID,
+      kinID: parent_ID,
       firstName: firstName,
-      lastName: secondName,
+      lastName: lastName,
       email: email,
-      phoneNumber: phoneNumber,
+      phone: phone,
       passCode: encryptedPassCode,
     });
 
@@ -258,6 +281,19 @@ app.post("/createParentDoc", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: `Failed to add parent: ${error.message}` });
+  }
+});
+
+/*ROUTE: Route for updating labels */
+app.post("/update-label", async (req, res) => {
+  try {
+    const userId = req.body.userId; // Assuming userId is passed in the request body
+    const labels = req.body.labels; // Assuming labels array is passed in the request body
+
+    const response = await updateLabel(userId, labels);
+    res.json(response);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
