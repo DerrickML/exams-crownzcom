@@ -2,7 +2,7 @@
 // import cors from "codockerrs";
 // Importing required modules
 import crypto from "crypto";
-import express from "express";
+import express, { response } from "express";
 import cors from "cors";
 import path from "path";
 import dotenv from "dotenv";
@@ -83,8 +83,8 @@ async function createKinDocument(kinID, firstName, lastName, email, phone) {
     return true;
   } catch (error) {
     console.error(error);
-    throw error;
-    // res.status(500).json({ error: `Failed to add parent: ${error.message}` });
+    // throw error;
+    // res.status(500).json({ error: `Alert: ${error.message}` });
   }
 }
 // Function to update labels
@@ -150,7 +150,19 @@ app.post("/get-user-details", async (req, res) => {
       } = userDetails.documents[0];
 
       // Now you can use these variables as needed
-      console.log(firstName, lastName, phone, email);
+      console.log(
+        "USER INFO:" +
+          "\nFirst Name: " +
+          firstName +
+          "\nLast Name: " +
+          lastName +
+          "\nPhone: " +
+          phone +
+          "\nEmail: " +
+          email +
+          "\nLabels: " +
+          labels,
+      );
 
       res.status(200).json({
         firstName: firstName,
@@ -162,6 +174,7 @@ app.post("/get-user-details", async (req, res) => {
         schoolName: schoolName,
         schoolAddress: schoolAddress,
         educationLevel: educationLevel,
+        labels: labels,
       });
     } else if (labels.includes("kin")) {
       // The "labels" array contains "kin"
@@ -309,6 +322,25 @@ app.post("/delete-user", async (req, res) => {
   }
 });
 
+/*ROUTE: (AUTH 3) Create student account with email if email method is selected on client side*/
+app.post("/create-student", async (req, res) => {
+  try {
+    const { email, phone, password, userName } = req.body;
+    const response = await users.create(
+      "unique()",
+      email,
+      phone,
+      password,
+      userName,
+    );
+    console.log("Student details: ", response);
+    res.json(response);
+  } catch (error) {
+    console.error("Error in creating student account:", error);
+    res.status(500).send(`Internal Server Error: ${error}`);
+  }
+});
+
 /*ROUTE: (AUTH 3) Create account of the Next of Kin*/
 app.post("/create-next-of-kin", async (req, res) => {
   try {
@@ -322,21 +354,24 @@ app.post("/create-next-of-kin", async (req, res) => {
         );
     }
     let password = generateSecurePassword();
-    let response, accountResponse;
+    let response, accountResponse, kinId;
     const kinLabel = ["kin"];
 
     //Check for signup method and use that for signup
     if (signupMethod === "email") {
       try {
-        response = await c_account.create(
+        response = await users.create(
           "unique()",
           email,
+          phone,
           password,
           firstName,
         );
         console.log("Kin ID: ", response.$id);
         await updateLabel(response.$id, kinLabel);
         accountResponse = await getUserDetails(response.$id);
+        kinId = response.$id;
+        console.log("Email account resoonse (ID expected): ", kinId);
       } catch (error) {
         console.log("Failed to create Next-of-Kin account:" + error);
         throw error.message;
@@ -347,8 +382,11 @@ app.post("/create-next-of-kin", async (req, res) => {
         console.log("Kin ID From Phone: ", response.userId);
         await updateLabel(response.userId, kinLabel);
         accountResponse = await getUserDetails(response.userId);
+        kinId = response.userId;
+        console.log("Phone account resoonse (ID expected): ", kinId);
       } catch (error) {
         console.log("Failed to create Next-of-Kin account:" + error);
+        res.status(500).send(error.message);
         throw error.message;
       }
     }
@@ -373,13 +411,13 @@ app.post("/create-next-of-kin", async (req, res) => {
     }
 
     //Add next of kin accout to next-of-kin collection
-    await createKinDocument(accountResponse, firstName, lastName, email, phone); //accountResponse parameter contains kinID
+    await createKinDocument(kinId, firstName, lastName, email, phone); //accountResponse parameter contains kinID
 
     console.log("Next of Kin account created:", accountResponse);
     res.json(accountResponse);
   } catch (error) {
     console.error("Error in creating Next of Kin account:", error);
-    res.status(500).send("Internal Server Error");
+    res.status(500).send(`Internal Server Error: ${error}`);
   }
 });
 
