@@ -17,6 +17,7 @@ import {
   database_id,
   studentTable_id,
   parentsTable_id,
+  Query,
 } from "./appwriteServerConfig.js";
 import { ENCRYPTION_KEY, encrypt } from "./passcodeHashConfig.js";
 import { sendEmail } from "./emailConfig.js";
@@ -66,6 +67,26 @@ function createKinEmailMessage(kinName, studentName, password) {
   `;
 }
 
+//Funtion to create kin document in kin table
+async function createKinDocument(kinID, firstName, lastName, email, phone) {
+  try {
+    await databases.createDocument(database_id, parentsTable_id, "unique()", {
+      kinID: kinID,
+      firstName: firstName,
+      lastName: lastName,
+      email: email || null,
+      phone: phone || null,
+      accountStatus: "Active",
+    });
+
+    console.log("Parent added successfully");
+    return true;
+  } catch (error) {
+    console.error(error);
+    throw error;
+    // res.status(500).json({ error: `Failed to add parent: ${error.message}` });
+  }
+}
 // Function to update labels
 async function updateLabel(userId, labels) {
   try {
@@ -84,7 +105,89 @@ async function getUserDetails(userId) {
   }
 }
 
+// Function to Query user (kin/student) details
+async function queryUser(userId, table_id, queryKey) {
+  try {
+    console.log("Database id: " + database_id);
+    console.log("Table id: " + table_id);
+    const details = await databases.listDocuments(database_id, table_id, [
+      Query.equal(queryKey, userId),
+    ]);
+    console.log(details);
+    return details;
+  } catch (error) {
+    console.log("On user query: " + error);
+    throw error; // Rethrow the error to handle it in the route
+  }
+}
+
 // ===== ROUTE HANDLERS =====
+/*ROUTE: (AUTH 3) Gets user details*/
+app.post("/get-user-details", async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    const user = await getUserDetails(userId);
+    const labels = user.labels;
+    let userDetails;
+    if (labels.includes("student")) {
+      // The "labels" array contains "student"
+      console.log("User is a student: " + userId);
+      let studQueryKey = "studID";
+      userDetails = await queryUser(userId, studentTable_id, studQueryKey);
+      console.log(userDetails);
+
+      // Extracting firstName, lastName, phone, and email
+      const {
+        firstName,
+        lastName,
+        otherName,
+        phone,
+        email,
+        gender,
+        educationLevel,
+        schoolName,
+        schoolAddress,
+      } = userDetails.documents[0];
+
+      // Now you can use these variables as needed
+      console.log(firstName, lastName, phone, email);
+
+      res.status(200).json({
+        firstName: firstName,
+        lastName: lastName,
+        otherName: otherName,
+        phone: phone,
+        email: email,
+        gender: gender,
+        schoolName: schoolName,
+        schoolAddress: schoolAddress,
+        educationLevel: educationLevel,
+      });
+    } else if (labels.includes("kin")) {
+      // The "labels" array contains "kin"
+      console.log("User is a kin");
+      let kinQueryKey = "kinID";
+      userDetails = await queryUser(userId, parentsTable_id, kinQueryKey);
+
+      // Extracting firstName, lastName, phone, and email
+      const { firstName, lastName, phone, email } = userDetails.documents[0];
+
+      // Now you can use these variables as needed
+      console.log(firstName, lastName, phone, email);
+
+      res.status(200).json({
+        firstName: firstName,
+        lastName: lastName,
+        phone: phone,
+        email: email,
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      error: error,
+    });
+  }
+});
 /*ROUTE: Sends a static password to use on the client for a user that doesn't exist*/
 app.get("/get-password", (req, res) => {
   const staticPassword = "Study@123"; // Define the static password here
@@ -94,7 +197,7 @@ app.get("/get-password", (req, res) => {
   });
 });
 
-/*ROUTE: Send Login Details on addition of an account if doesn't exist*/
+/*ROUTE: (AUTH 1/2) (Kin) Send Login Details on addition of an account if doesn't exist*/
 app.post("/send-password", (req, res) => {
   const recipientEmail = req.body.email;
   const signInPassword = req.body.password; // Static sign-in password
@@ -129,7 +232,7 @@ app.post("/send-password", (req, res) => {
   });
 });
 
-/*ROUTE: Server-side Encryption*/
+/*ROUTE: (AUTH 1/2) Server-side Encryption*/
 app.post("/encrypt", (req, res) => {
   try {
     const text = req.body.passcode;
@@ -141,7 +244,7 @@ app.post("/encrypt", (req, res) => {
   }
 });
 
-/*ROUTE: User Server-Side Decryption and Verification*/
+/*ROUTE: (AUTH 1/2) User Server-Side Decryption and Verification*/
 app.post("/verify-passcode", (req, res) => {
   try {
     const encryptedText = req.body.encryptedPasscode;
@@ -169,7 +272,7 @@ app.post("/verify-passcode", (req, res) => {
   }
 });
 
-/*ROUTE: User Listing*/
+/*ROUTE: (AUTH 1/DER) User Listing*/
 app.get("/users", async (req, res) => {
   try {
     const usersList = await users.list(); // Fetch Users from Appwrite
@@ -181,7 +284,7 @@ app.get("/users", async (req, res) => {
   }
 });
 
-/*ROUTE: User Deletion*/
+/*ROUTE: (AUTH 1 / DER) User Deletion*/
 app.post("/delete-user", async (req, res) => {
   const userIds = req.body.userIds;
   if (!userIds || userIds.length === 0) {
@@ -206,10 +309,11 @@ app.post("/delete-user", async (req, res) => {
   }
 });
 
-/*ROUTE: Create account of the Next of Kin*/
+/*ROUTE: (AUTH 3) Create account of the Next of Kin*/
 app.post("/create-next-of-kin", async (req, res) => {
   try {
-    const { email, firstName, phone, studentName } = req.body;
+    const { email, firstName, lastName, phone, signupMethod, studentName } =
+      req.body;
     if (!email && !phone) {
       return res
         .status(400)
@@ -221,12 +325,36 @@ app.post("/create-next-of-kin", async (req, res) => {
     let response, accountResponse;
     const kinLabel = ["kin"];
 
+    //Check for signup method and use that for signup
+    if (signupMethod === "email") {
+      try {
+        response = await c_account.create(
+          "unique()",
+          email,
+          password,
+          firstName,
+        );
+        console.log("Kin ID: ", response.$id);
+        await updateLabel(response.$id, kinLabel);
+        accountResponse = await getUserDetails(response.$id);
+      } catch (error) {
+        console.log("Failed to create Next-of-Kin account:" + error);
+        throw error.message;
+      }
+    } else if (signupMethod === "phone") {
+      try {
+        response = await c_account.createPhoneSession("unique()", phone);
+        console.log("Kin ID From Phone: ", response.userId);
+        await updateLabel(response.userId, kinLabel);
+        accountResponse = await getUserDetails(response.userId);
+      } catch (error) {
+        console.log("Failed to create Next-of-Kin account:" + error);
+        throw error.message;
+      }
+    }
+
+    // Attempt to send an email if it's provided
     if (email) {
-      response = await c_account.create("unique()", email, password, firstName);
-      console.log("Kin ID: ", response.$id);
-      await updateLabel(response.$id, kinLabel);
-      accountResponse = await getUserDetails(response.$id);
-      // Attempt to send an email
       try {
         const emailMessage = createKinEmailMessage(
           firstName,
@@ -240,13 +368,12 @@ app.post("/create-next-of-kin", async (req, res) => {
         );
       } catch (emailError) {
         console.error("Email sending failed:", emailError);
+        throw emailError;
       }
-    } else if (phone) {
-      response = await c_account.createPhoneSession("unique()", phone);
-      console.log("Kin ID From Phone: ", response.userId);
-      await updateLabel(response.userId, kinLabel);
-      accountResponse = await getUserDetails(response.userId);
     }
+
+    //Add next of kin accout to next-of-kin collection
+    await createKinDocument(accountResponse, firstName, lastName, email, phone); //accountResponse parameter contains kinID
 
     console.log("Next of Kin account created:", accountResponse);
     res.json(accountResponse);
@@ -256,7 +383,7 @@ app.post("/create-next-of-kin", async (req, res) => {
   }
 });
 
-/*ROUTE: Add Created New Parent account to Parents' Collection*/
+/*ROUTE: (AUTH 1/2) Add Created New Parent account to Parents' Collection*/
 app.post("/createParentDoc", async (req, res) => {
   const { kinID, firstName, lastName, email, phone, passCode } = req.body;
 
@@ -284,7 +411,7 @@ app.post("/createParentDoc", async (req, res) => {
   }
 });
 
-/*ROUTE: Route for updating labels */
+/*ROUTE: (AUTH 3) Route for updating labels */
 app.post("/update-label", async (req, res) => {
   try {
     const userId = req.body.userId; // Assuming userId is passed in the request body
@@ -296,6 +423,56 @@ app.post("/update-label", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// ROUTE: (AUTH 1/2) Check Phone Number in Student and Kin Tables
+app.post("/check-phone-number", async (req, res) => {
+  const phoneNumber = req.body.phone;
+
+  if (!phoneNumber) {
+    return res.status(400).json({ error: "Phone number is required" });
+  }
+
+  try {
+    // Check in the student table
+    const existsInStudentTable = await checkPhoneNumberInTable(
+      studentTable_id,
+      phoneNumber,
+    );
+
+    if (existsInStudentTable) {
+      return res.json({ exists: true });
+    }
+
+    // Check in the kin table
+    const existsInKinTable = await checkPhoneNumberInTable(
+      parentsTable_id,
+      phoneNumber,
+    );
+
+    if (existsInKinTable) {
+      return res.json({ exists: true });
+    }
+
+    // Phone number does not exist in any table
+    return res.json({ exists: false });
+  } catch (error) {
+    console.error("Error checking phone number:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Function to check if a phone number exists in a given table
+async function checkPhoneNumberInTable(tableId, phoneNumber) {
+  try {
+    const response = await databases.listDocuments(database_id, tableId, [
+      Query.equal("phone", phoneNumber),
+    ]);
+    return response.documents.length > 0;
+  } catch (error) {
+    console.error("Error querying table:", error);
+    throw error;
+  }
+}
 
 // ===== STARTING THE SERVER =====
 app.listen(3000, () => {

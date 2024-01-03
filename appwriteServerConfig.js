@@ -6,7 +6,7 @@ import {
   Databases as cDatabases,
   Permission as cPermission,
   Role as cRole,
-  Query as cQuery,
+  Query,
 } from "appwrite";
 
 import dotenv from "dotenv";
@@ -28,9 +28,10 @@ const c_client = new cClient()
 
 const c_account = new cAccount(c_client);
 const c_databases = new cDatabases(c_client);
+// const query = new Query(c_client);
 
 // Database and collection IDs
-const database_id = "651417820a07629ea837";
+const database_id = "655f5a677fcf3b1d8b79";
 const studentTable_id = "657065f7dddd996bf19b";
 const parentsTable_id = "65706739032c0962d0a9";
 
@@ -45,4 +46,5 @@ export {
   database_id,
   studentTable_id,
   parentsTable_id,
+  Query,
 };
