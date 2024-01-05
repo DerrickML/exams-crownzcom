@@ -1,6 +1,4 @@
 // Importing required modules
-// import cors from "codockerrs";
-// Importing required modules
 import crypto from "crypto";
 import express, { response } from "express";
 import cors from "cors";
@@ -19,7 +17,6 @@ import {
   parentsTable_id,
   Query,
 } from "./appwriteServerConfig.js";
-import { ENCRYPTION_KEY, encrypt } from "./passcodeHashConfig.js";
 import { sendEmail } from "./emailConfig.js";
 
 dotenv.config();
@@ -121,6 +118,37 @@ async function queryUser(userId, table_id, queryKey) {
   }
 }
 
+// Helper function to construct response for user details
+// Used in the get-user-details route
+function constructResponse(user, userDetails, labels, isStudent) {
+  let response = {
+    status: userDetails ? userDetails.total > 0 : false,
+    firstName: null,
+    lastName: null,
+    phone: user.phone || null,
+    email: user.email || null,
+    labels: labels || [],
+    // Set default values for other properties
+    otherName: null,
+    gender: null,
+    schoolName: null,
+    schoolAddress: null,
+    educationLevel: null,
+  };
+
+  // Populate response if userDetails exist
+  if (userDetails && userDetails.total > 0) {
+    const details = userDetails.documents[0];
+    for (const key in details) {
+      if (response.hasOwnProperty(key)) {
+        response[key] = details[key];
+      }
+    }
+  }
+
+  return response;
+}
+
 // ===== ROUTE HANDLERS =====
 /*ROUTE: (AUTH 3) Gets user details*/
 app.post("/get-user-details", async (req, res) => {
@@ -129,196 +157,24 @@ app.post("/get-user-details", async (req, res) => {
     const user = await getUserDetails(userId);
     const labels = user.labels;
     let userDetails;
+
     if (labels.includes("student")) {
-      // The "labels" array contains "student"
       console.log("User is a student: " + userId);
-      let studQueryKey = "studID";
-      userDetails = await queryUser(userId, studentTable_id, studQueryKey);
-      console.log(userDetails);
-
-      // Extracting firstName, lastName, phone, and email
-      const {
-        firstName,
-        lastName,
-        otherName,
-        phone,
-        email,
-        gender,
-        educationLevel,
-        schoolName,
-        schoolAddress,
-      } = userDetails.documents[0];
-
-      // Now you can use these variables as needed
-      console.log(
-        "USER INFO:" +
-          "\nFirst Name: " +
-          firstName +
-          "\nLast Name: " +
-          lastName +
-          "\nPhone: " +
-          phone +
-          "\nEmail: " +
-          email +
-          "\nLabels: " +
-          labels,
-      );
-
-      res.status(200).json({
-        firstName: firstName,
-        lastName: lastName,
-        otherName: otherName,
-        phone: phone,
-        email: email,
-        gender: gender,
-        schoolName: schoolName,
-        schoolAddress: schoolAddress,
-        educationLevel: educationLevel,
-        labels: labels,
-      });
+      userDetails = await queryUser(userId, studentTable_id, "studID");
     } else if (labels.includes("kin")) {
-      // The "labels" array contains "kin"
       console.log("User is a kin");
-      let kinQueryKey = "kinID";
-      userDetails = await queryUser(userId, parentsTable_id, kinQueryKey);
-
-      // Extracting firstName, lastName, phone, and email
-      const { firstName, lastName, phone, email } = userDetails.documents[0];
-
-      // Now you can use these variables as needed
-      console.log(firstName, lastName, phone, email);
-
-      res.status(200).json({
-        firstName: firstName,
-        lastName: lastName,
-        phone: phone,
-        email: email,
-      });
+      userDetails = await queryUser(userId, parentsTable_id, "kinID");
     }
-  } catch (error) {
-    res.status(500).json({
-      error: error,
-    });
-  }
-});
-/*ROUTE: Sends a static password to use on the client for a user that doesn't exist*/
-app.get("/get-password", (req, res) => {
-  const staticPassword = "Study@123"; // Define the static password here
 
-  res.status(200).json({
-    password: staticPassword,
-  });
-});
-
-/*ROUTE: (AUTH 1/2) (Kin) Send Login Details on addition of an account if doesn't exist*/
-app.post("/send-password", (req, res) => {
-  const recipientEmail = req.body.email;
-  const signInPassword = req.body.password; // Static sign-in password
-
-  // const signInPassword = "Study@123"; // Static sign-in password
-
-  // Email options
-  const mailOptions = {
-    from: gmailUser,
-    to: recipientEmail,
-    subject: "Your Sign-In Details",
-    html: `
-      <h1>Welcome to Our Application</h1>
-      <p>Here are your sign-in details:</p>
-      <ul>
-        <li><b>Email:</b> ${recipientEmail}</li>
-        <li><b>Password:</b> ${signInPassword}</li>
-      </ul>
-      <p><i>Please make sure to change your password upon first login.</i></p>
-    `,
-  };
-
-  // Send the email
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.error(`Error: ${error}`);
-      res.status(500).send("Error in sending email");
-    } else {
-      console.log(`Message sent: ${info.response}`);
-      res.status(200).send("Email sent successfully");
-    }
-  });
-});
-
-/*ROUTE: (AUTH 1/2) Server-side Encryption*/
-app.post("/encrypt", (req, res) => {
-  try {
-    const text = req.body.passcode;
-    const encryptedData = encrypt(text);
-    res.json({ encryptedData });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Encryption failed" });
-  }
-});
-
-/*ROUTE: (AUTH 1/2) User Server-Side Decryption and Verification*/
-app.post("/verify-passcode", (req, res) => {
-  try {
-    const encryptedText = req.body.encryptedPasscode;
-    const userPasscode = req.body.userPasscode;
-
-    let textParts = encryptedText.split(":");
-    let iv = Buffer.from(textParts.shift(), "hex");
-    let encryptedTextBuffer = Buffer.from(textParts.join(":"), "hex");
-    let decipher = crypto.createDecipheriv(
-      "aes-256-cbc",
-      Buffer.from(ENCRYPTION_KEY, "hex"),
-      iv,
+    const response = constructResponse(
+      user,
+      userDetails,
+      labels,
+      labels.includes("student"),
     );
-    let decrypted = decipher.update(encryptedTextBuffer);
-    decrypted = Buffer.concat([decrypted, decipher.final()]);
-
-    if (decrypted.toString() === userPasscode) {
-      res.json({ verified: true });
-    } else {
-      res.json({ verified: false });
-    }
+    res.status(200).json(response);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Decryption failed" });
-  }
-});
-
-/*ROUTE: (AUTH 1/DER) User Listing*/
-app.get("/users", async (req, res) => {
-  try {
-    const usersList = await users.list(); // Fetch Users from Appwrite
-    res.json({ users: usersList.users }); // Respond with the list of users
-    console.log(res);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to fetch users" }); // Updated to return JSON
-  }
-});
-
-/*ROUTE: (AUTH 1 / DER) User Deletion*/
-app.post("/delete-user", async (req, res) => {
-  const userIds = req.body.userIds;
-  if (!userIds || userIds.length === 0) {
-    return res.status(400).send("User IDs are required");
-  }
-
-  const errors = []; // Array to hold any errors that occur
-
-  for (const userId of userIds) {
-    try {
-      await users.delete(userId); // Assuming nodeAppwriteUsers is available
-    } catch (error) {
-      console.error(error);
-      errors.push(`Failed to delete user with ID ${userId}: ${error.message}`);
-    }
-  }
-
-  if (errors.length > 0) {
-    res.status(500).json({ errors }); // Send back any errors that occurred
-  } else {
-    res.send("Users deleted successfully");
+    res.status(500).json({ error: error });
   }
 });
 
@@ -421,34 +277,6 @@ app.post("/create-next-of-kin", async (req, res) => {
   }
 });
 
-/*ROUTE: (AUTH 1/2) Add Created New Parent account to Parents' Collection*/
-app.post("/createParentDoc", async (req, res) => {
-  const { kinID, firstName, lastName, email, phone, passCode } = req.body;
-
-  // Basic validation
-  if (!parent_ID || !firstName || !lastName || !email || !phone || !passCode) {
-    return res.status(400).json({ error: "Missing required fields" });
-  }
-
-  try {
-    const encryptedPassCode = encrypt(passCode);
-
-    await databases.createDocument(database_id, parentsTable_id, "unique()", {
-      kinID: parent_ID,
-      firstName: firstName,
-      lastName: lastName,
-      email: email,
-      phone: phone,
-      passCode: encryptedPassCode,
-    });
-
-    res.json({ message: "Parent added successfully" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: `Failed to add parent: ${error.message}` });
-  }
-});
-
 /*ROUTE: (AUTH 3) Route for updating labels */
 app.post("/update-label", async (req, res) => {
   try {
@@ -461,56 +289,6 @@ app.post("/update-label", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
-// ROUTE: (AUTH 1/2) Check Phone Number in Student and Kin Tables
-app.post("/check-phone-number", async (req, res) => {
-  const phoneNumber = req.body.phone;
-
-  if (!phoneNumber) {
-    return res.status(400).json({ error: "Phone number is required" });
-  }
-
-  try {
-    // Check in the student table
-    const existsInStudentTable = await checkPhoneNumberInTable(
-      studentTable_id,
-      phoneNumber,
-    );
-
-    if (existsInStudentTable) {
-      return res.json({ exists: true });
-    }
-
-    // Check in the kin table
-    const existsInKinTable = await checkPhoneNumberInTable(
-      parentsTable_id,
-      phoneNumber,
-    );
-
-    if (existsInKinTable) {
-      return res.json({ exists: true });
-    }
-
-    // Phone number does not exist in any table
-    return res.json({ exists: false });
-  } catch (error) {
-    console.error("Error checking phone number:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
-
-// Function to check if a phone number exists in a given table
-async function checkPhoneNumberInTable(tableId, phoneNumber) {
-  try {
-    const response = await databases.listDocuments(database_id, tableId, [
-      Query.equal("phone", phoneNumber),
-    ]);
-    return response.documents.length > 0;
-  } catch (error) {
-    console.error("Error querying table:", error);
-    throw error;
-  }
-}
 
 // ===== STARTING THE SERVER =====
 app.listen(3000, () => {
