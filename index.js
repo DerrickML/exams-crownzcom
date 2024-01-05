@@ -45,6 +45,7 @@ function generateSecurePassword(length = 12) {
   return crypto.randomBytes(length).toString("hex").slice(0, length);
 }
 
+// Function to create email message
 function createKinEmailMessage(kinName, studentName, password) {
   return `
     <div style="font-family: Arial, sans-serif; color: #333;">
@@ -84,7 +85,7 @@ async function createKinDocument(kinID, firstName, lastName, email, phone) {
     // res.status(500).json({ error: `Alert: ${error.message}` });
   }
 }
-// Function to update labels
+// Function to update User account labels
 async function updateLabel(userId, labels) {
   try {
     return await users.updateLabels(userId, labels);
@@ -102,7 +103,7 @@ async function getUserDetails(userId) {
   }
 }
 
-// Function to Query user (kin/student) details
+// Function to Query user (kin/student) collection for details
 async function queryUser(userId, table_id, queryKey) {
   try {
     console.log("Database id: " + database_id);
@@ -150,7 +151,7 @@ function constructResponse(user, userDetails, labels, isStudent) {
 }
 
 // ===== ROUTE HANDLERS =====
-/*ROUTE: (AUTH 3) Gets user details*/
+/*ROUTE 1: (AUTH 3) Gets user details requested from client side*/
 app.post("/get-user-details", async (req, res) => {
   try {
     const userId = req.body.userId;
@@ -178,7 +179,7 @@ app.post("/get-user-details", async (req, res) => {
   }
 });
 
-/*ROUTE: (AUTH 3) Create student account with email if email method is selected on client side*/
+/*ROUTE 2: (AUTH 3) Create user student account with email if email method is selected on client side*/
 app.post("/create-student", async (req, res) => {
   try {
     const { email, phone, password, userName } = req.body;
@@ -197,7 +198,7 @@ app.post("/create-student", async (req, res) => {
   }
 });
 
-/*ROUTE: (AUTH 3) Create account of the Next of Kin*/
+/*ROUTE 3: (AUTH 3) Create user account for the Next of Kin*/
 app.post("/create-next-of-kin", async (req, res) => {
   try {
     const { email, firstName, lastName, phone, signupMethod, studentName } =
@@ -277,7 +278,7 @@ app.post("/create-next-of-kin", async (req, res) => {
   }
 });
 
-/*ROUTE: (AUTH 3) Route for updating labels */
+/*ROUTE 4: (AUTH 3) Route for updating user labels */
 app.post("/update-label", async (req, res) => {
   try {
     const userId = req.body.userId; // Assuming userId is passed in the request body
