@@ -46,7 +46,7 @@ function generateSecurePassword(length = 12) {
 }
 
 // Function to create email message
-function createKinEmailMessage(kinName, studentName, password) {
+function createKinEmailMessage(kinName, studentName, password, kinEmail) {
   return `
     <div style="font-family: Arial, sans-serif; color: #333;">
       <h2 style="color: #4A90E2;">Welcome to Student Progress Tracker!</h2>
@@ -54,7 +54,7 @@ function createKinEmailMessage(kinName, studentName, password) {
       <p>We are excited to inform you that <strong>${studentName}</strong> has added you as their Next of Kin on our platform. This role is crucial in monitoring and supporting their educational journey.</p>
       <p>Your account details are as follows:</p>
       <ul>
-        <li>Email: <strong>${kinName}</strong></li>
+        <li>Email: <strong>${kinEmail}</strong></li>
         <li>Password: <strong>${password}</strong> (Please change this on your first login)</li>
       </ul>
       <p>As a Next of Kin, you'll have access to view their academic progress, including quiz and exam scores. This is a great opportunity to stay involved and offer support where needed.</p>
@@ -129,6 +129,7 @@ function constructResponse(user, userDetails, labels, isStudent) {
     phone: user.phone || null,
     email: user.email || null,
     labels: labels || [],
+    kinID: user.kinID || null,
     // Set default values for other properties
     otherName: null,
     gender: null,
@@ -255,6 +256,7 @@ app.post("/create-next-of-kin", async (req, res) => {
           firstName,
           studentName,
           password,
+          email,
         );
         await sendEmail(
           email,
