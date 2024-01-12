@@ -106,6 +106,9 @@ async function getUserDetails(userId) {
 // Function to Query user (kin/student) collection for details
 async function queryUser(userId, table_id, queryKey) {
   try {
+    queryKey === "studID"
+      ? console.log("On student query")
+      : console.log("On kin query");
     console.log("Database id: " + database_id);
     console.log("Table id: " + table_id);
     const details = await databases.listDocuments(database_id, table_id, [
@@ -121,7 +124,7 @@ async function queryUser(userId, table_id, queryKey) {
 
 // Helper function to construct response for user details
 // Used in the get-user-details route
-function constructResponse(user, userDetails, labels, isStudent) {
+function constructResponse(user, userDetails, kinDetails, labels, isStudent) {
   let response = {
     status: userDetails ? userDetails.total > 0 : false,
     firstName: null,
@@ -148,6 +151,15 @@ function constructResponse(user, userDetails, labels, isStudent) {
     }
   }
 
+  // Conditionally add kin details if the user is a student and kinDetails exist
+  if (isStudent && kinDetails && kinDetails.total > 0) {
+    const kin = kinDetails.documents[0];
+    response.kinFirstName = kin.firstName || null;
+    response.kinLastName = kin.lastName || null;
+    response.kinEmail = kin.email || null;
+    response.kinPhone = kin.phone || null;
+  }
+
   return response;
 }
 
@@ -158,11 +170,18 @@ app.post("/get-user-details", async (req, res) => {
     const userId = req.body.userId;
     const user = await getUserDetails(userId);
     const labels = user.labels;
-    let userDetails;
+    let userDetails, kinDetails;
 
     if (labels.includes("student")) {
       console.log("User is a student: " + userId);
       userDetails = await queryUser(userId, studentTable_id, "studID");
+      if (userDetails.documents[0].kinID) {
+        kinDetails = await queryUser(
+          userDetails.documents[0].kinID,
+          parentsTable_id,
+          "kinID",
+        );
+      }
     } else if (labels.includes("kin")) {
       console.log("User is a kin");
       userDetails = await queryUser(userId, parentsTable_id, "kinID");
@@ -171,6 +190,7 @@ app.post("/get-user-details", async (req, res) => {
     const response = constructResponse(
       user,
       userDetails,
+      kinDetails,
       labels,
       labels.includes("student"),
     );
