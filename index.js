@@ -164,6 +164,47 @@ function constructResponse(user, userDetails, kinDetails, labels, isStudent) {
   return response;
 }
 
+//Function to update a document in a collection
+async function updateDocument(collectionId, documentId, data) {
+  try {
+    console.log("Document Data: ", data);
+    const response = await databases.updateDocument(
+      database_id,
+      collectionId,
+      documentId,
+      data,
+    );
+
+    return response;
+  } catch (error) {
+    console.log("Failed to update document", error);
+    throw error;
+  }
+}
+
+//Function to update user Account service data
+async function updateAccountData(userId, data) {
+  try {
+    if (data.hasOwnProperty("firstName")) {
+      console.log("firstName exists and is directly defined!");
+      const promise = await users.updateName(userId, data.firstName);
+    }
+    if (data.hasOwnProperty("email")) {
+      console.log("email exists and is directly defined!");
+      const promise = await users.updateEmail(userId, data.email);
+    }
+    if (data.hasOwnProperty("phone")) {
+      console.log("phone exists and is directly defined!");
+      const promise = await users.updatePhone(userId, data.phone);
+    }
+
+    return "Finished to check account update";
+  } catch (error) {
+    console.log("Failed to User Account", error);
+    throw error;
+  }
+}
+
 // ===== ROUTE HANDLERS =====
 /*ROUTE 1: (AUTH 3) Gets user details requested from client side*/
 app.post("/get-user-details", async (req, res) => {
@@ -314,6 +355,45 @@ app.post("/update-label", async (req, res) => {
   }
 });
 
+/*ROUTE 5: (AUTH 3) Route for updating user acount details */
+app.post("/update-account", async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    const documentID = req.body.userDocId;
+    const userLabel = req.body.label;
+
+    let collectionID;
+
+    userLabel === "student"
+      ? (collectionID = studentTable_id)
+      : (collectionID = parentsTable_id);
+
+    const dataToUpdate = { ...req.body };
+
+    //Remove data which isn't to be updated
+    delete dataToUpdate.userDocId;
+    delete dataToUpdate.userId;
+    delete dataToUpdate.label;
+
+    //Updating User data via the Account service
+    const responseAccountService = await updateAccountData(
+      userId,
+      dataToUpdate,
+    );
+
+    //Updating User data stored in Collecion via database service
+    const responseDocumentUpdate = await updateDocument(
+      collectionID,
+      documentID,
+      dataToUpdate,
+    );
+
+    res.json({
+      Account: responseAccountService,
+      document: responseDocumentUpdate,
+    });
+  } catch (error) { }
+});
 // ===== STARTING THE SERVER =====
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
