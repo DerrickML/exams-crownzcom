@@ -127,6 +127,7 @@ async function queryUser(userId, table_id, queryKey) {
 function constructResponse(user, userDetails, kinDetails, labels, isStudent) {
   let response = {
     status: userDetails ? userDetails.total > 0 : false,
+    userDocId: userDetails.documents[0].$id || null,
     firstName: null,
     lastName: null,
     phone: user.phone || null,
