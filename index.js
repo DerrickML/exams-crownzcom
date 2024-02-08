@@ -186,16 +186,23 @@ async function updateDocument(collectionId, documentId, data) {
 async function updateAccountData(userId, data) {
   try {
     if (data.hasOwnProperty("firstName")) {
-      console.log("firstName exists and is directly defined!");
-      const promise = await users.updateName(userId, data.firstName);
+      if (data.firstName && data.firstName !== undefined && data.firstName !== null && data.firstName !== "") {
+        console.log("firstName exists and is directly defined!");
+        const promise = await users.updateName(userId, data.firstName);
+      }
+
     }
     if (data.hasOwnProperty("email")) {
-      console.log("email exists and is directly defined!");
-      const promise = await users.updateEmail(userId, data.email);
+      if (data.email && data.email !== undefined && data.email !== null && data.email !== "") {
+        console.log("email exists and is directly defined!");
+        const promise = await users.updateEmail(userId, data.email);
+      }
     }
     if (data.hasOwnProperty("phone")) {
-      console.log("phone exists and is directly defined!");
-      const promise = await users.updatePhone(userId, data.phone);
+      if (data.phone && data.phone !== undefined && data.phone !== null && data.phone !== "") {
+        console.log("phone exists and is directly defined!");
+        const promise = await users.updatePhone(userId, data.phone);
+      }
     }
 
     return "Finished to check account update";
@@ -392,7 +399,10 @@ app.post("/update-account", async (req, res) => {
       Account: responseAccountService,
       document: responseDocumentUpdate,
     });
-  } catch (error) { }
+  } catch (error) {
+    console.log("Failed to Update User Details:\n", error)
+    res.json({ error: `Failed to Update User Details:\n${error}` })
+  }
 });
 // ===== STARTING THE SERVER =====
 app.listen(3000, () => {
