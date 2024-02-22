@@ -186,20 +186,34 @@ async function updateDocument(collectionId, documentId, data) {
 async function updateAccountData(userId, data) {
   try {
     if (data.hasOwnProperty("firstName")) {
-      if (data.firstName && data.firstName !== undefined && data.firstName !== null && data.firstName !== "") {
+      if (
+        data.firstName &&
+        data.firstName !== undefined &&
+        data.firstName !== null &&
+        data.firstName !== ""
+      ) {
         console.log("firstName exists and is directly defined!");
         const promise = await users.updateName(userId, data.firstName);
       }
-
     }
     if (data.hasOwnProperty("email")) {
-      if (data.email && data.email !== undefined && data.email !== null && data.email !== "") {
+      if (
+        data.email &&
+        data.email !== undefined &&
+        data.email !== null &&
+        data.email !== ""
+      ) {
         console.log("email exists and is directly defined!");
         const promise = await users.updateEmail(userId, data.email);
       }
     }
     if (data.hasOwnProperty("phone")) {
-      if (data.phone && data.phone !== undefined && data.phone !== null && data.phone !== "") {
+      if (
+        data.phone &&
+        data.phone !== undefined &&
+        data.phone !== null &&
+        data.phone !== ""
+      ) {
         console.log("phone exists and is directly defined!");
         const promise = await users.updatePhone(userId, data.phone);
       }
@@ -400,10 +414,50 @@ app.post("/update-account", async (req, res) => {
       document: responseDocumentUpdate,
     });
   } catch (error) {
-    console.log("Failed to Update User Details:\n", error)
-    res.json({ error: `Failed to Update User Details:\n${error}` })
+    console.log("Failed to Update User Details:\n", error);
+    res.json({ error: `Failed to Update User Details:\n${error}` });
   }
 });
+
+/*ROUTE 6: Alert Next of Kin about Exam Attempt*/
+app.post("/alert-next-of-kin", async (req, res) => {
+  try {
+    const {
+      studentName,
+      educationLevel,
+      kinNames,
+      kinEmail,
+      subjectName,
+      examScore,
+      examDateTime,
+    } = req.body;
+
+    // Create the email body
+    const emailBody = `
+      <h1>Exam Attempt Alert</h1>
+      <p>Dear ${kinNames},</p>
+      <p>This is to inform you that your ward, ${studentName}, has attempted an exam.</p>
+      <p>Exam Details:</p>
+      <ul>
+        <li><b>Student Name:</b> ${studentName}</li>
+        <li><b>Education Level:</b> ${educationLevel}</li>
+        <li><b>Subject Name:</b> ${subjectName}</li>
+        <li><b>Exam Score:</b> ${examScore}</li>
+        <li><b>Exam Date and Time:</b> ${examDateTime}</li>
+      </ul>
+      <p>Thank you for your attention.</p>
+    `;
+
+    // Send the email
+    await sendEmail(kinEmail, "Exam Attempt Alert", emailBody);
+
+    res.status(200).json({ message: "Email sent successfully" });
+  } catch (error) {
+    console.error("Error in sending email:", error);
+    res.status(500).json({ error: "Failed to send email" });
+  }
+});
+
 // ===== STARTING THE SERVER =====
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
