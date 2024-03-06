@@ -183,4 +183,4 @@ app.get('/payment-status/:transactionId/:momoTokenId', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
