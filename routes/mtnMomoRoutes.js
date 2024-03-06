@@ -9,12 +9,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const router = Router();
-
 const app = express();
-
-// Middleware configuration
-app.use(bodyParser.json());  // Support for JSON-encoded bodies
-app.use(cors());  // Apply CORS to all routes for wider accessibility
 
 // MTN MoMo API configuration
 const MOMO_SUBSCRIPTION_KEY = process.env.MOMO_SUBSCRIPTION_KEY; //Subscription key (Primary  or Secondary key) for MoMo API. You can get this from the MoMo API portal

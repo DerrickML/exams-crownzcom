@@ -10,12 +10,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const router = Router();
-
 const app = express();
-
-// Middleware configuration
-app.use(bodyParser.json());  // Support for JSON-encoded bodies
-app.use(cors());  // Apply CORS to all routes for wider accessibility
 
 //Flutterwave configuration
 const flw = new Flutterwave(process.env.FLW_PUBLIC_KEY, process.env.FLW_SECRET_KEY);

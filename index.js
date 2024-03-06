@@ -28,9 +28,6 @@ import mtnMomoRoutes from "./routes/mtnMomoRoutes.js";
 
 dotenv.config();
 
-// Support for JSON-encoded bodies
-app.use(bodyParser.json());
-
 // Initializing Express app
 const app = express();
 
@@ -43,6 +40,12 @@ app.use(
   }),
 );
 /************************************************/
+
+// Support for JSON-encoded bodies
+app.use(bodyParser.json());
+
+// Support for URL-encoded bodies
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Server is set up to parse JSON bodies
 app.use(express.json());
