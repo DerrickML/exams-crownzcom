@@ -19,146 +19,146 @@ const momoRequestToPayUrl = `https://${momoHost}/collection/v1_0/requesttopay`; 
 // This endpoint creates a new API user and returns the user ID (X-Reference-Id).
 // This user ID is essential for further actions like retrieving the API key.
 app.post("/create-api-user", async (req, res) => {
-  const apiUrl = `https://${momoHost}/v1_0/apiuser`;
+    const apiUrl = `https://${momoHost}/v1_0/apiuser`;
 
-  // UUID generation for use in API calls where a unique identifier is required
-  let uuid = uuidv4();
+    // UUID generation for use in API calls where a unique identifier is required
+    let uuid = uuidv4();
 
-  // Headers for the MoMo API request
-  const headers = {
-    "X-Reference-Id": uuid,
-    "Ocp-Apim-Subscription-Key": MOMO_SUBSCRIPTION_KEY,
-    "Content-Type": "application/json",
-  };
-  // Data payload for the API request
-  const data = {
-    providerCallbackHost: "https://525e-41-210-145-67.ngrok-free.app", // replace with your Callback url
-  };
+    // Headers for the MoMo API request
+    const headers = {
+        "X-Reference-Id": uuid,
+        "Ocp-Apim-Subscription-Key": MOMO_SUBSCRIPTION_KEY,
+        "Content-Type": "application/json",
+    };
+    // Data payload for the API request
+    const data = {
+        providerCallbackHost: "https://2wkvf7-3000.csb.app/", // replace with your Callback url
+    };
 
-  try {
-    const response = await axios.post(apiUrl, data, { headers: headers });
-    res.status(200).json({ response: response.data, userId: uuid }); // Returns the response from MoMo API along with the generated userId
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error creating API user", error: error.message });
-  }
+    try {
+        const response = await axios.post(apiUrl, data, { headers: headers });
+        res.status(200).json({ response: response.data, userId: uuid }); // Returns the response from MoMo API along with the generated userId
+    } catch (error) {
+        res
+            .status(500)
+            .json({ message: "Error creating API user", error: error.message });
+    }
 });
 
 // Endpoint: Get Created User by User ID
 // This endpoint retrieves details of a created user using their user ID.
 // It's useful for validating that a user has been created successfully.
 app.get("/get-created-user/:userId", async (req, res) => {
-  const userId = req.params.userId;
-  const apiUrl = `https://${momoHost}/v1_0/apiuser/${userId}`;
-  const headers = {
-    "Ocp-Apim-Subscription-Key": MOMO_SUBSCRIPTION_KEY,
-  };
+    const userId = req.params.userId;
+    const apiUrl = `https://${momoHost}/v1_0/apiuser/${userId}`;
+    const headers = {
+        "Ocp-Apim-Subscription-Key": MOMO_SUBSCRIPTION_KEY,
+    };
 
-  try {
-    const response = await axios.get(apiUrl, { headers: headers });
-    res.status(200).json(response.data); // Successful retrieval returns user details
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error retrieving created user", error: error.message });
-  }
+    try {
+        const response = await axios.get(apiUrl, { headers: headers });
+        res.status(200).json(response.data); // Successful retrieval returns user details
+    } catch (error) {
+        res
+            .status(500)
+            .json({ message: "Error retrieving created user", error: error.message });
+    }
 });
 
 // Endpoint: Retrieve User API Key
 // This endpoint retrieves the API key for a specific user, which is used as the password
 // in user authentication when generating a MoMo token.
 app.post("/retrieve-api-key/:userId", async (req, res) => {
-  const userId = req.params.userId;
-  const apiUrl = `https://${momoHost}/v1_0/apiuser/${userId}/apikey`;
-  const headers = {
-    "Ocp-Apim-Subscription-Key": MOMO_SUBSCRIPTION_KEY,
-  };
+    const userId = req.params.userId;
+    const apiUrl = `https://${momoHost}/v1_0/apiuser/${userId}/apikey`;
+    const headers = {
+        "Ocp-Apim-Subscription-Key": MOMO_SUBSCRIPTION_KEY,
+    };
 
-  try {
-    const response = await axios.post(apiUrl, {}, { headers: headers });
-    res.status(200).json(response.data); // Returns the user's API key
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error retrieving API key", error: error.message });
-  }
+    try {
+        const response = await axios.post(apiUrl, {}, { headers: headers });
+        res.status(200).json(response.data); // Returns the user's API key
+    } catch (error) {
+        res
+            .status(500)
+            .json({ message: "Error retrieving API key", error: error.message });
+    }
 });
 
 // Endpoint: Generate MoMo Token
 // This endpoint generates a token used for authorizing payment requests.
 // The token is essential for making requests to the `/request-to-pay` endpoint.
 app.post("/generate-api-token", async (req, res) => {
-  const apiUrl = momoTokenUrl;
-  console.log("Token request details:", req.body);
-  const { userId, apiKey } = req.body;
-  const username = userId; // Username (X-Reference-Id) from user creation step
-  const password = apiKey; // API Key retrieved from user API key step
-  const basicAuth = "Basic " + btoa(username + ":" + password); // Basic Auth header
-  const headers = {
-    Authorization: basicAuth,
-    "Ocp-Apim-Subscription-Key": MOMO_SUBSCRIPTION_KEY,
-  };
+    const apiUrl = momoTokenUrl;
+    console.log("Token request details:", req.body);
+    const { userId, apiKey } = req.body;
+    const username = userId; // Username (X-Reference-Id) from user creation step
+    const password = apiKey; // API Key retrieved from user API key step
+    const basicAuth = "Basic " + btoa(username + ":" + password); // Basic Auth header
+    const headers = {
+        Authorization: basicAuth,
+        "Ocp-Apim-Subscription-Key": MOMO_SUBSCRIPTION_KEY,
+    };
 
-  try {
-    const response = await axios.post(apiUrl, {}, { headers: headers });
-    res.status(200).json(response.data); // Returns the generated token
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error generating API token", error: error.message });
-  }
+    try {
+        const response = await axios.post(apiUrl, {}, { headers: headers });
+        res.status(200).json(response.data); // Returns the generated token
+    } catch (error) {
+        res
+            .status(500)
+            .json({ message: "Error generating API token", error: error.message });
+    }
 });
 
 // Endpoint: Request to Pay
 // This endpoint initiates a payment request to a specified mobile number.
 // It requires a valid MoMo token and transaction details.
 app.post("/request-to-pay", async (req, res) => {
-  try {
-    console.log("Payment request details:", req.body);
-    const { total, phone, momoTokenId } = req.body;
+    try {
+        console.log("Payment request details:", req.body);
+        const { total, phone, momoTokenId } = req.body;
 
-    if (!momoTokenId) {
-      return res.status(400).json({ error: "MoMo token not available" });
+        if (!momoTokenId) {
+            return res.status(400).json({ error: "MoMo token not available" });
+        }
+
+        const externalId = uuidv4();
+        const body = {
+            amount: total, // Total amount for the transaction
+            currency: "EUR", // Currency for the transaction
+            externalId: externalId, // Unique ID for each transaction
+            payer: {
+                partyIdType: "MSISDN",
+                partyId: phone, // Phone number of the payer
+            },
+            payerMessage: "Payment for order",
+            payeeNote: "Payment for order",
+        };
+
+        console.log("External Id: ", body.externalId);
+
+        const paymentRefId = uuidv4(); // New UUID for the request
+        console.log("PaymentRefId: ", paymentRefId);
+        const momoResponse = await axios.post(momoRequestToPayUrl, body, {
+            headers: {
+                "X-Reference-Id": paymentRefId,
+                "X-Target-Environment": "sandbox",
+                "Ocp-Apim-Subscription-Key": MOMO_SUBSCRIPTION_KEY,
+                Authorization: `Bearer ${momoTokenId}`,
+                "Content-Type": "application/json",
+            },
+        });
+
+        res.json({
+            momoResponse: momoResponse.data,
+            success: true,
+            paymentRefId: paymentRefId,
+            externalId: externalId,
+        }); // Returns response from MoMo API
+    } catch (error) {
+        console.error("Error in processing payment request:", error);
+        res.status(500).json({ error: `An error occurred: ${error.message}` });
     }
-
-    const externalId = uuidv4();
-    const body = {
-      amount: total, // Total amount for the transaction
-      currency: "EUR", // Currency for the transaction
-      externalId: externalId, // Unique ID for each transaction
-      payer: {
-        partyIdType: "MSISDN",
-        partyId: phone, // Phone number of the payer
-      },
-      payerMessage: "Payment for order",
-      payeeNote: "Payment for order",
-    };
-
-    console.log("External Id: ", body.externalId);
-
-    const paymentRefId = uuidv4(); // New UUID for the request
-    console.log("PaymentRefId: ", paymentRefId);
-    const momoResponse = await axios.post(momoRequestToPayUrl, body, {
-      headers: {
-        "X-Reference-Id": paymentRefId,
-        "X-Target-Environment": "sandbox",
-        "Ocp-Apim-Subscription-Key": MOMO_SUBSCRIPTION_KEY,
-        Authorization: `Bearer ${momoTokenId}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    res.json({
-      momoResponse: momoResponse.data,
-      success: true,
-      paymentRefId: paymentRefId,
-      externalId: externalId,
-    }); // Returns response from MoMo API
-  } catch (error) {
-    console.error("Error in processing payment request:", error);
-    res.status(500).json({ error: `An error occurred: ${error.message}` });
-  }
 });
 
 // Endpoint: Get Request to Pay Transaction Status
@@ -166,22 +166,22 @@ app.post("/request-to-pay", async (req, res) => {
 // The Bearer Authentication Token generated using CreateAccessToken API Call use to make a payment request
 // It is useful for confirming the status of a transaction initiated by the `/request-to-pay` endpoint.
 app.get("/payment-status/:transactionId/:momoTokenId", async (req, res) => {
-  const transactionId = req.params.transactionId;
-  const momoTokenId = req.params.momoTokenId;
-  const apiUrl = `https://${momoHost}/collection/v1_0/requesttopay/${transactionId}`;
-  const headers = {
-    "Ocp-Apim-Subscription-Key": MOMO_SUBSCRIPTION_KEY,
-    Authorization: `Bearer ${momoTokenId}`,
-    "X-Target-Environment": "sandbox",
-  };
+    const transactionId = req.params.transactionId;
+    const momoTokenId = req.params.momoTokenId;
+    const apiUrl = `https://${momoHost}/collection/v1_0/requesttopay/${transactionId}`;
+    const headers = {
+        "Ocp-Apim-Subscription-Key": MOMO_SUBSCRIPTION_KEY,
+        Authorization: `Bearer ${momoTokenId}`,
+        "X-Target-Environment": "sandbox",
+    };
 
-  try {
-    const response = await axios.get(apiUrl, { headers: headers });
-    res.status(200).json(response.data); // Returns the status of the payment transaction
-  } catch (error) {
-    console.error("Error in retrieving payment status:", error);
-    res.status(500).json({ error: `An error occurred: ${error.message}` });
-  }
+    try {
+        const response = await axios.get(apiUrl, { headers: headers });
+        res.status(200).json(response.data); // Returns the status of the payment transaction
+    } catch (error) {
+        console.error("Error in retrieving payment status:", error);
+        res.status(500).json({ error: `An error occurred: ${error.message}` });
+    }
 });
 
 export default router;
