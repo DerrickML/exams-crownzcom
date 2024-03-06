@@ -479,7 +479,7 @@ app.post("/alert-next-of-kin", async (req, res) => {
 /*--- FLUTTERWAVE SUPPORTED ROUTES ---*/
 app.use('/flutterwave', flutterwaveRoutes);
 /*--- MTN MOMO API SUPPORTED ROUTES ---*/
-app.use('/mtnMomo', momoRoutes);
+app.use('/mtnMomo', mtnMomoRoutes);
 
 // ===== STARTING THE SERVER =====
 app.listen(3000, () => {
