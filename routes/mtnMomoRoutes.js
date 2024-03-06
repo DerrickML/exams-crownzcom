@@ -1,10 +1,14 @@
-const express = require('express');
-const router = express.Router();
-const bodyParser = require('body-parser');
-const axios = require('axios');
-const cors = require('cors');
-const { v4: uuidv4 } = require('uuid');  // UUID generation for unique identifiers
-require('dotenv').config();  // Load environment variables from .env file
+import express from 'express';
+import { Router } from 'express';
+import bodyParser from 'body-parser';
+import axios from 'axios';
+import cors from 'cors';
+import { v4 as uuidv4 } from 'uuid';  // UUID generation for unique identifiers
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const router = Router();
 
 const app = express();
 
