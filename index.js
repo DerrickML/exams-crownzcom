@@ -1,9 +1,13 @@
 // Importing required modules
 import crypto from "crypto";
 import express, { response } from "express";
+import bodyParser from 'body-parser';
 import cors from "cors";
 import path from "path";
 import dotenv from "dotenv";
+import axios from "axios";
+import { v4 as uuidv4 } from "uuid";
+import Flutterwave from 'flutterwave-node-v3';
 import {
   client,
   users,
@@ -18,8 +22,14 @@ import {
   Query,
 } from "./appwriteServerConfig.js";
 import { sendEmail } from "./emailConfig.js";
+import flutterwaveRoutes from "./routes/flutterwaveRoutes.js";
+import mtnMomoRoutes from "./routes/mtnMomoRoutes.js";
+
 
 dotenv.config();
+
+// Support for JSON-encoded bodies
+app.use(bodyParser.json());
 
 // Initializing Express app
 const app = express();
@@ -227,6 +237,11 @@ async function updateAccountData(userId, data) {
 }
 
 // ===== ROUTE HANDLERS =====
+/*ROUTE 0: (AUTH 3) Home route - Simple check to confirm the server is running and used by webhooks too*/
+app.get('/', (req, res) => {
+  res.send('MoMo API Server is up and running!');
+});
+
 /*ROUTE 1: (AUTH 3) Gets user details requested from client side*/
 app.post("/get-user-details", async (req, res) => {
   try {
@@ -457,6 +472,11 @@ app.post("/alert-next-of-kin", async (req, res) => {
     res.status(500).json({ error: "Failed to send email" });
   }
 });
+
+/*--- FLUTTERWAVE SUPPORTED ROUTES ---*/
+app.use('/flutterwave', flutterwaveRoutes);
+/*--- MTN MOMO API SUPPORTED ROUTES ---*/
+app.use('/mtnMomo', momoRoutes);
 
 // ===== STARTING THE SERVER =====
 app.listen(3000, () => {
