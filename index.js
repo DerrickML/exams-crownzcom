@@ -5,9 +5,6 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import path from "path";
 import dotenv from "dotenv";
-import axios from "axios";
-import { v4 as uuidv4 } from "uuid";
-import Flutterwave from "flutterwave-node-v3";
 import {
   client,
   users,
