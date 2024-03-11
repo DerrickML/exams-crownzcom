@@ -23,9 +23,10 @@ router.get("/fetch-coupons", async (req, res) => {
     // Prepare the CSV data
     let csvData = "";
     if (coupons.documents.length > 0) {
+      console.log("coupons: ", coupons);
       // Get the attribute names as CSV headers
       const headers = Object.keys(coupons.documents[0]).filter(
-        (key) => key.charAt(0) !== "$",
+        (key) => !key.startsWith("$"),
       );
 
       // Create the CSV headers
@@ -33,14 +34,13 @@ router.get("/fetch-coupons", async (req, res) => {
 
       // Create the CSV rows
       coupons.documents.forEach((coupon) => {
-        // Filter out keys that start with '$'
         const values = headers.map((header) => coupon[header]);
         csvData += values.join(",") + "\n";
       });
     }
 
     // Write the CSV data to a file
-    fs.writeFileSync("../data/coupons.csv", csvData);
+    fs.writeFileSync("coupons.csv", csvData);
 
     return res.json({ message: "Coupons fetched and saved to CSV file" });
   } catch (error) {
