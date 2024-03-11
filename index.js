@@ -19,6 +19,7 @@ import {
   Query,
 } from "./appwriteServerConfig.js";
 import { sendEmail } from "./emailConfig.js";
+import dbRoutes from "./routes/cachedDatabase.js";
 import flutterwaveRoutes from "./routes/flutterwaveRoutes.js";
 import mtnMomoRoutes from "./routes/mtnMomoRoutes.js";
 
@@ -474,8 +475,12 @@ app.post("/alert-next-of-kin", async (req, res) => {
 
 /*--- FLUTTERWAVE SUPPORTED ROUTES ---*/
 app.use("/flutterwave", flutterwaveRoutes);
+
 /*--- MTN MOMO API SUPPORTED ROUTES ---*/
 app.use("/mtnMomo", mtnMomoRoutes);
+
+/*--- Cached Database Routes ---*/
+app.use("/db", dbRoutes);
 
 // ===== STARTING THE SERVER =====
 app.listen(3000, () => {
