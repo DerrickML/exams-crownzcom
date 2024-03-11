@@ -34,6 +34,7 @@ const c_databases = new cDatabases(c_client);
 const database_id = "655f5a677fcf3b1d8b79";
 const studentTable_id = "657065f7dddd996bf19b";
 const parentsTable_id = "65706739032c0962d0a9";
+const couponTable_id = "65d74fb70f64c0e46f36";
 
 export {
   client,
@@ -46,5 +47,6 @@ export {
   database_id,
   studentTable_id,
   parentsTable_id,
+  couponTable_id,
   Query,
 };
