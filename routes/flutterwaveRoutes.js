@@ -26,7 +26,7 @@ router.get("/testFlutterwave", (req, res) => {
   res.send("testFlutterwave says hello! 👋");
 });
 
-// Endpoint to initiate a payment
+// Endpoint to initiate a payment for Uganda mobile money (MTN and Airtel only supported)
 router.post("/pay", async (req, res) => {
   const { phone_number, network, amount, email } = req.body;
   console.log(req.body);
@@ -41,12 +41,33 @@ router.post("/pay", async (req, res) => {
 
   try {
     const response = await flw.MobileMoney.uganda(payload);
-    console.log(JSON.stringify(response));
-    res.json(response);
+    console.log("Payment Response: /n", JSON.stringify(response));
+    res.json({ response, tx_ref: payload.tx_ref });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: error.message });
   }
+});
+
+router.post("/card-payment", async (req, res) => {
+  app.post("/create-payment", async (req, res) => {
+    try {
+      const response = await got
+        .post("https://api.flutterwave.com/v3/payments", {
+          headers: {
+            Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
+          },
+          json: {
+            ...req.body, // You can send required data from your frontend
+          },
+        })
+        .json();
+
+      res.json(response);
+    } catch (error) {
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
 });
 
 //Verify transaction status
@@ -58,9 +79,7 @@ router.get("/verifyTransaction/:transactionId", async (req, res) => {
 
     console.log(JSON.stringify(response));
 
-    if (
-      response.data.status === "successful"
-    ) {
+    if (response.data.status === "successful") {
       // Success! Confirm the customer's payment
       res.json({ status: "success", message: "Payment successful" });
     } else {
