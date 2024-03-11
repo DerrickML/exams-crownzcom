@@ -23,16 +23,18 @@ router.get("/fetch-coupons", async (req, res) => {
     // Prepare the CSV data
     let csvData = "";
     if (coupons.documents.length > 0) {
-      console.log("coupons: ", coupons);
       // Get the attribute names as CSV headers
-      const headers = Object.keys(coupons.documents[0].$permissions.read);
+      const headers = Object.keys(coupons.documents[0]).filter(
+        (key) => key.charAt(0) !== "$",
+      );
 
       // Create the CSV headers
       csvData += headers.join(",") + "\n";
 
       // Create the CSV rows
       coupons.documents.forEach((coupon) => {
-        const values = Object.values(coupon.$permissions.read);
+        // Filter out keys that start with '$'
+        const values = headers.map((header) => coupon[header]);
         csvData += values.join(",") + "\n";
       });
     }
