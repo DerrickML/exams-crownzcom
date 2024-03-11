@@ -49,6 +49,30 @@ router.post("/pay", async (req, res) => {
   }
 });
 
+//Verify transaction status
+router.get("/verifyTransaction/:transactionId", async (req, res) => {
+  const { transactionId } = req.params;
+
+  try {
+    const response = await flw.Transaction.verify({ id: transactionId });
+
+    console.log(JSON.stringify(response));
+
+    if (
+      response.data.status === "successful"
+    ) {
+      // Success! Confirm the customer's payment
+      res.json({ status: "success", message: "Payment successful" });
+    } else {
+      // Inform the customer their payment was unsuccessful
+      res.json({ status: "failure", message: "Payment unsuccessful" });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Endpoint to handle webhook notifications
 router.post("/webhook", (req, res) => {
   // Your webhook logic here
