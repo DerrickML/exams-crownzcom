@@ -19,7 +19,8 @@ import {
   Query,
 } from "./appwriteServerConfig.js";
 import { sendEmail } from "./emailConfig.js";
-import dbRoutes from "./routes/cachedDatabase.js";
+import cachedDbRoutes from "./routes/cachedDatabase.js";
+import queryCachedDbRoutes from "./routes/queryCachedDbRoutes.js";
 import flutterwaveRoutes from "./routes/flutterwaveRoutes.js";
 import mtnMomoRoutes from "./routes/mtnMomoRoutes.js";
 
@@ -480,7 +481,10 @@ app.use("/flutterwave", flutterwaveRoutes);
 app.use("/mtnMomo", mtnMomoRoutes);
 
 /*--- Cached Database Routes ---*/
-app.use("/db", dbRoutes);
+app.use("/db", cachedDbRoutes);
+
+/*--- Query Cached Database Routes ---*/
+app.use("/query", queryCachedDbRoutes);
 
 // ===== STARTING THE SERVER =====
 app.listen(3000, () => {
