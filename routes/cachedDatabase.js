@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { Router } from "express";
 import {
     couponTable_id,
@@ -8,6 +9,9 @@ import {
 } from "../appwriteServerConfig.js";
 
 const router = Router();
+
+// Get the directory name of the current module file
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 router.get("/fetch-coupons", async (req, res) => {
     const passcode = req.query.passcode; // Get the passcode from the request query
@@ -41,7 +45,7 @@ router.get("/fetch-coupons", async (req, res) => {
         }
 
         // Write the CSV data to a file in the 'data' directory
-        const filePath = path.join(__dirname, '..', 'data', 'coupons.csv');
+        const filePath = path.join(dirname, '..', 'data', 'coupons.csv');
         fs.writeFileSync(filePath, csvData);
 
         return res.json({ message: "Coupons fetched and saved to CSV file" });
