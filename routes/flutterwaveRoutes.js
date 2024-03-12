@@ -2,6 +2,7 @@ import express from "express";
 import { Router } from "express";
 import { v4 as uuidv4 } from "uuid";
 import Flutterwave from "flutterwave-node-v3";
+import got from "got";
 import dotenv from "dotenv";
 
 dotenv.config();
