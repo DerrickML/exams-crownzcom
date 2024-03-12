@@ -50,24 +50,22 @@ router.post("/pay", async (req, res) => {
 });
 
 router.post("/card-payment", async (req, res) => {
-  app.post("/create-payment", async (req, res) => {
-    try {
-      const response = await got
-        .post("https://api.flutterwave.com/v3/payments", {
-          headers: {
-            Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
-          },
-          json: {
-            ...req.body, // You can send required data from your frontend
-          },
-        })
-        .json();
+  try {
+    const response = await got
+      .post("https://api.flutterwave.com/v3/payments", {
+        headers: {
+          Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
+        },
+        json: {
+          ...req.body, // You can send required data from your frontend
+        },
+      })
+      .json();
 
-      res.json(response);
-    } catch (error) {
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
+    res.json(response);
+  } catch (error) {
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 //Verify transaction status
