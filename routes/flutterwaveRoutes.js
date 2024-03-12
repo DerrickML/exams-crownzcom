@@ -62,7 +62,7 @@ router.post("/card-payment", async (req, res) => {
         },
       })
       .json();
-
+    console.log("Data card payment: ", JSON.stringify(response));
     res.json(response);
   } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });
