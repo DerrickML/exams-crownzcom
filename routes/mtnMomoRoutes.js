@@ -107,7 +107,7 @@ router.post("/generate-api-token", async (req, res) => {
     };
 
     const response = await axios.post(apiUrl, {}, { headers: headers });
-    console.log("Generate MTN MoMo API Token \n", response);
+    // console.log("Generate MTN MoMo API Token \n", response);
     res.status(200).json(response.data); // Returns the generated token
   } catch (error) {
     res
@@ -141,10 +141,10 @@ router.post("/request-to-pay", async (req, res) => {
       payeeNote: "Payment for order",
     };
 
-    console.log("External Id: ", body.externalId);
+    console.log("request-to-pay - External Id: ", body.externalId);
 
     const paymentRefId = uuidv4(); // New UUID for the request
-    console.log("PaymentRefId: ", paymentRefId);
+    console.log("request-to-pay - PaymentRefId: ", paymentRefId);
     const momoResponse = await axios.post(momoRequestToPayUrl, body, {
       headers: {
         "X-Reference-Id": paymentRefId,
@@ -155,25 +155,44 @@ router.post("/request-to-pay", async (req, res) => {
       },
     });
 
+    let transaction_success = true;
+
+    console.log("request-to-pay - Response: ");
+    console.log(momoResponse.status);
+    console.log(momoResponse.statusText);
+
+    if (
+      (momoResponse.status === 202) &
+      (momoResponse.statusText === "Accepted")
+    ) {
+      console.log("request-to-pay - Transaction Successful");
+    } else {
+      console.log("request-to-pay - Transaction Failed");
+      transaction_success = false;
+    }
+
     res.json({
       momoResponse: momoResponse.data,
-      success: true,
+      success: transaction_success,
       paymentRefId: paymentRefId,
       externalId: externalId,
-    }); // Returns response from MoMo API
+      momoTokenId: momoTokenId,
+    });
   } catch (error) {
     console.error("Error in processing payment request:", error);
     res.status(500).json({ error: `An error occurred: ${error.message}` });
   }
 });
 
-// Endpoint: Get Request to Pay Transaction Status
-// This operation is used to get the status of a request to pay. X-Reference-Id that was passed in the post is used as reference to the request.
+// Endpoint: Get 'Request-to-Pay' Transaction Status
+// This operation is used to get the status of a request to pay.
+// The X-Reference-Id that was passed in the post is used as reference to the request.
 // The Bearer Authentication Token generated using CreateAccessToken API Call use to make a payment request
 // It is useful for confirming the status of a transaction initiated by the `/request-to-pay` endpoint.
 router.get("/payment-status/:transactionId/:momoTokenId", async (req, res) => {
   const transactionId = req.params.transactionId;
   const momoTokenId = req.params.momoTokenId;
+  console.log("payment-status - Transaction Id: ", transactionId);
   const apiUrl = `https://${momoHost}/collection/v1_0/requesttopay/${transactionId}`;
   const headers = {
     "Ocp-Apim-Subscription-Key": MOMO_SUBSCRIPTION_KEY,
@@ -183,7 +202,8 @@ router.get("/payment-status/:transactionId/:momoTokenId", async (req, res) => {
 
   try {
     const response = await axios.get(apiUrl, { headers: headers });
-    res.status(200).json(response.data); // Returns the status of the payment transaction
+    console.log("payment-status - Response: ", response.data);
+    res.json(response.data); // Returns the status of the payment transaction
   } catch (error) {
     console.error("Error in retrieving payment status:", error);
     res.status(500).json({ error: `An error occurred: ${error.message}` });
