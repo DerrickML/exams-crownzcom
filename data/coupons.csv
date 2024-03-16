@@ -1,3 +1,2 @@
 CouponCode,Description,DiscountType,DiscountValue,UsageLimit,ApplicableTier,ValidFrom,ExpiryDate,IsActive
-test-1,for testing on all tiers,points,20,100,ALL,2024-01-01T00:00:00.000+00:00,2024-12-26T23:59:59.900+00:00,true
 test-2,percentage,percentage,50,100,ALL,2024-03-01T12:04:16.351+00:00,2024-08-31T12:04:19.720+00:00,true
