@@ -26,6 +26,8 @@ import mtnMomoRoutes from "./routes/mtnMomoRoutes.js";
 
 dotenv.config();
 
+const PORT_NO = process.env.PORT_NO || 3000
+
 // Initializing Express app
 const app = express();
 
@@ -487,6 +489,6 @@ app.use("/db", cachedDbRoutes);
 app.use("/query", queryCachedDbRoutes);
 
 // ===== STARTING THE SERVER =====
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
+app.listen(PORT_NO, () => {
+  console.log(`Server is running on port ${PORT_NO}`);
 });
