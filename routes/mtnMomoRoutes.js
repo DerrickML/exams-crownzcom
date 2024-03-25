@@ -190,6 +190,7 @@ router.post("/request-to-pay", async (req, res) => {
 // The Bearer Authentication Token generated using CreateAccessToken API Call use to make a payment request
 // It is useful for confirming the status of a transaction initiated by the `/request-to-pay` endpoint.
 router.get("/payment-status/:transactionId/:momoTokenId", async (req, res) => {
+  console.log('PAYMENT STATUS')
   const transactionId = req.params.transactionId;
   const momoTokenId = req.params.momoTokenId;
   console.log("payment-status - Transaction Id: ", transactionId);
@@ -202,7 +203,7 @@ router.get("/payment-status/:transactionId/:momoTokenId", async (req, res) => {
 
   try {
     const response = await axios.get(apiUrl, { headers: headers });
-    console.log("payment-status - Response: ", response.data);
+    console.log("payment-status - Response: ", response);
     res.json(response.data); // Returns the status of the payment transaction
   } catch (error) {
     console.error("Error in retrieving payment status:", error);
