@@ -153,6 +153,7 @@ function constructResponse(user, userDetails, kinDetails, labels, isStudent) {
     schoolName: null,
     schoolAddress: null,
     educationLevel: null,
+    subjects: userDetails.subjects || [],
   };
 
   // Populate response if userDetails exist
