@@ -26,7 +26,7 @@ import mtnMomoRoutes from "./routes/mtnMomoRoutes.js";
 
 dotenv.config();
 
-const PORT_NO = process.env.PORT_NO || 3000
+const PORT_NO = process.env.PORT_NO || 3009
 
 // Initializing Express app
 const app = express();
