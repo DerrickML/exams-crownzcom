@@ -1,12 +1,23 @@
 import express from "express";
 import fs from "fs";
 import { parse } from "csv-parse/sync";
+import cors from "cors";
 import path from "path";
 import dotenv from "dotenv";
 import { promisify } from 'util';
 import { createObjectCsvWriter } from 'csv-writer';
 import { stringify } from 'csv-stringify';
 import { fileURLToPath } from "url";
+
+/************************************************/
+/*From any origin*/
+// Use cors middleware with wildcard origin
+app.use(
+  cors({
+    origin: "*",
+  }),
+);
+/************************************************/
 
 dotenv.config();
 const PLE_ATTEMPTED_QUESTIONS_FILE = process.env.PLE_ATTEMPTED_QUESTIONS_FILE
