@@ -9,15 +9,7 @@ import { createObjectCsvWriter } from 'csv-writer';
 import { stringify } from 'csv-stringify';
 import { fileURLToPath } from "url";
 
-/************************************************/
-/*From any origin*/
-// Use cors middleware with wildcard origin
-app.use(
-  cors({
-    origin: "*",
-  }),
-);
-/************************************************/
+
 
 dotenv.config();
 const PLE_ATTEMPTED_QUESTIONS_FILE = process.env.PLE_ATTEMPTED_QUESTIONS_FILE
@@ -30,6 +22,15 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
 
+/************************************************/
+/*From any origin*/
+// Use cors middleware with wildcard origin
+router.use(
+  cors({
+    origin: "*",
+  }),
+);
+/************************************************/
 
 // Retrieve User Questions History
 router.get('/getQtnHistory/:userId/:subjectName/:educationLevel', async (req, res) => {
