@@ -1,5 +1,10 @@
 node_modules
 .env
-./data
 .github/dependabot.yml
 yarn.lock
+
+# DATA FILES
+./data/ple_attempts.csv
+./data/uce_attempts.csv
+./data/uace_attempts.csv
+./data/coupons.csv

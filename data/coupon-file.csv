@@ -1,0 +1,2 @@
+CouponCode,Description,DiscountType,DiscountValue,UsageLimit,ApplicableTier,ValidFrom,ExpiryDate,IsActive
+coupon,STRING-Description,STRING-DiscountType,INT-DiscountValue,INT-UsageLimit,STRING-ApplicableTier,DATE/TIME-ValidFrom,DATE/TIME-ExpiryDate,BOOLEAN-IsActive

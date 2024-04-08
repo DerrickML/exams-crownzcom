@@ -1,0 +1,2 @@
+UserId,SubjectName,QuestionsJSON,Timestamp
+STRING-UserId,STRING-SubjectName,STING-QuestionsJSON,DATETIME-Timestamp
