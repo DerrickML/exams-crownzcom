@@ -1,15 +1,12 @@
 import express from "express";
 import fs from "fs";
 import { parse } from "csv-parse/sync";
-import cors from "cors";
 import path from "path";
 import dotenv from "dotenv";
 import { promisify } from 'util';
 import { createObjectCsvWriter } from 'csv-writer';
 import { stringify } from 'csv-stringify';
 import { fileURLToPath } from "url";
-
-
 
 dotenv.config();
 const PLE_ATTEMPTED_QUESTIONS_FILE = process.env.PLE_ATTEMPTED_QUESTIONS_FILE
@@ -21,16 +18,6 @@ const router = express.Router();
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
-
-/************************************************/
-/*From any origin*/
-// Use cors middleware with wildcard origin
-router.use(
-  cors({
-    origin: "*",
-  }),
-);
-/************************************************/
 
 // Retrieve User Questions History
 router.get('/getQtnHistory/:userId/:subjectName/:educationLevel', async (req, res) => {
