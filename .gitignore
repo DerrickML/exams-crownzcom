@@ -4,7 +4,7 @@ node_modules
 yarn.lock
 
 # DATA FILES
-./data/ple_attempts.csv
-./data/uce_attempts.csv
-./data/uace_attempts.csv
-./data/coupons.csv
+data/ple_attempts.csv
+data/uce_attempts.csv
+data/uace_attempts.csv
+data/coupons.csv
