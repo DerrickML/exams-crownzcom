@@ -3,15 +3,15 @@ import fs from "fs";
 import { parse } from "csv-parse/sync";
 import path from "path";
 import dotenv from "dotenv";
-import { promisify } from 'util';
-import { createObjectCsvWriter } from 'csv-writer';
-import { stringify } from 'csv-stringify';
+import { promisify } from "util";
+import { createObjectCsvWriter } from "csv-writer";
+import { stringify } from "csv-stringify";
 import { fileURLToPath } from "url";
 
 dotenv.config();
-const PLE_ATTEMPTED_QUESTIONS_FILE = process.env.PLE_ATTEMPTED_QUESTIONS_FILE
-const UCE_ATTEMPTED_QUESTIONS_FILE = process.env.UCE_ATTEMPTED_QUESTIONS_FILE
-const UACE_ATTEMPTED_QUESTIONS_FILE = process.env.UACE_ATTEMPTED_QUESTIONS_FILE
+const PLE_ATTEMPTED_QUESTIONS_FILE = process.env.PLE_ATTEMPTED_QUESTIONS_FILE;
+const UCE_ATTEMPTED_QUESTIONS_FILE = process.env.UCE_ATTEMPTED_QUESTIONS_FILE;
+const UACE_ATTEMPTED_QUESTIONS_FILE = process.env.UACE_ATTEMPTED_QUESTIONS_FILE;
 let fileName;
 
 const router = express.Router();
@@ -20,58 +20,59 @@ const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
 
 // Retrieve User Questions History
-router.get('/getQtnHistory/:userId/:subjectName/:educationLevel', async (req, res) => {
-  const { userId, subjectName, educationLevel } = req.params;
-  if (educationLevel === 'PLE') {
-    fileName = PLE_ATTEMPTED_QUESTIONS_FILE
-  }
-  else {
-    throw new Error('Education level not provided');
-  };
-
-  const filePath = path.join(dirname, "..", "data", fileName);
-
-  try {
-    const data = await readFile(filePath, "utf8");
-    const records = parse(data, { columns: true, skip_empty_lines: true });
-
-    const userRecord = records.find(record =>
-      record.UserId === userId && record.SubjectName === subjectName);
-
-    if (userRecord) {
-      res.json({
-        questionsJSON: JSON.parse(userRecord.QuestionsJSON || '{}'),
-        timestamp: userRecord.Timestamp || null
-      });
+router.get(
+  "/getQtnHistory/:userId/:subjectName/:educationLevel",
+  async (req, res) => {
+    const { userId, subjectName, educationLevel } = req.params;
+    if (educationLevel === "PLE") {
+      fileName = PLE_ATTEMPTED_QUESTIONS_FILE;
     } else {
-      // No history found for this user and subject
-      res.json({ questionsJSON: {}, timestamp: null });
+      throw new Error("Education level not provided");
     }
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Error reading user history');
-  }
-});
+
+    const filePath = path.join(dirname, "..", "data", fileName);
+
+    try {
+      const data = await readFile(filePath, "utf8");
+      const records = parse(data, { columns: true, skip_empty_lines: true });
+
+      const userRecord = records.find(
+        (record) =>
+          record.UserId === userId && record.SubjectName === subjectName,
+      );
+
+      if (userRecord) {
+        res.json({
+          questionsJSON: JSON.parse(userRecord.QuestionsJSON || "{}"),
+          timestamp: userRecord.Timestamp || null,
+        });
+      } else {
+        // No history found for this user and subject
+        res.json({ questionsJSON: {}, timestamp: null });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).send("Error reading user history: ", error);
+    }
+  },
+);
 
 // Update User Questions History
-router.post('/updateQtnHistory', async (req, res) => {
+router.post("/updateQtnHistory", async (req, res) => {
   const { userId, subjectName, questionsJSON, educationLevel } = req.body;
 
-  if (educationLevel === 'PLE') {
-    fileName = PLE_ATTEMPTED_QUESTIONS_FILE
+  if (educationLevel === "PLE") {
+    fileName = PLE_ATTEMPTED_QUESTIONS_FILE;
+  } else if (educationLevel === "UCE") {
+    fileName = UCE_ATTEMPTED_QUESTIONS_FILE;
+  } else if (educationLevel === "UACE") {
+    fileName = UACE_ATTEMPTED_QUESTIONS_FILE;
+  } else {
+    throw new Error("Education level not provided");
   }
-  else if (educationLevel === 'UCE') {
-    fileName = UCE_ATTEMPTED_QUESTIONS_FILE
-  }
-  else if (educationLevel === 'UACE') {
-    fileName = UACE_ATTEMPTED_QUESTIONS_FILE
-  }
-  else {
-    throw new Error('Education level not provided');
-  };
 
-  console.log('Update Question History Education Level: ', educationLevel);
-  questionsJSON ? console.log('Not empty') : console.log('Empty Question JSON')
+  console.log("Update Question History Education Level: ", educationLevel);
+  questionsJSON ? console.log("Not empty") : console.log("Empty Question JSON");
 
   try {
     // let data = await readFile(csvFilePath, { encoding: 'utf8' });
@@ -86,16 +87,26 @@ router.post('/updateQtnHistory', async (req, res) => {
       records = [];
     }
 
-    const existingRecordIndex = records.findIndex(record => record.UserId === userId && record.SubjectName === subjectName);
+    const existingRecordIndex = records.findIndex(
+      (record) =>
+        record.UserId === userId && record.SubjectName === subjectName,
+    );
 
     if (existingRecordIndex >= 0) {
       // Merge with existing record
-      let existingQuestionsJSON = JSON.parse(records[existingRecordIndex].QuestionsJSON);
+      let existingQuestionsJSON = JSON.parse(
+        records[existingRecordIndex].QuestionsJSON,
+      );
 
       // Iterate through each category in the existing data and update with new questions
       for (const category in questionsJSON) {
         if (existingQuestionsJSON[category]) {
-          existingQuestionsJSON[category] = [...new Set([...existingQuestionsJSON[category], ...questionsJSON[category]])];
+          existingQuestionsJSON[category] = [
+            ...new Set([
+              ...existingQuestionsJSON[category],
+              ...questionsJSON[category],
+            ]),
+          ];
         } else {
           existingQuestionsJSON[category] = questionsJSON[category];
         }
@@ -105,7 +116,7 @@ router.post('/updateQtnHistory', async (req, res) => {
         UserId: userId,
         SubjectName: subjectName,
         QuestionsJSON: JSON.stringify(questionsJSON),
-        Timestamp: new Date().toISOString()
+        Timestamp: new Date().toISOString(),
       };
     } else {
       // Append new record
@@ -113,9 +124,9 @@ router.post('/updateQtnHistory', async (req, res) => {
         UserId: userId,
         SubjectName: subjectName,
         QuestionsJSON: JSON.stringify(questionsJSON),
-        Timestamp: new Date().toISOString()
+        Timestamp: new Date().toISOString(),
       });
-      console.log('Appending new user record.');
+      console.log("Appending new user record.");
     }
 
     // Convert records to CSV format
@@ -133,15 +144,14 @@ router.post('/updateQtnHistory', async (req, res) => {
           res.status(500).send(`Error writing to CSV: ${writeErr}`);
           return;
         }
-        res.send('User history updated successfully');
+        res.send("User history updated successfully");
       });
     });
   } catch (error) {
     console.log(error);
-    res.status(500).send(`Error updating user history ${error}`);
+    res.status(500).send(`Error updating user history: ${error}`);
   }
 });
-
 
 // Route to validate a coupon
 router.get("/validate-coupon", async (req, res) => {
