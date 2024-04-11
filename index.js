@@ -51,7 +51,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 
 // Serving static files from 'public' directory
-app.use(express.static(path.join(process.cwd(), "public")));
+// app.use(express.static(path.join(process.cwd(), "public")));
+app.use(express.static(path.join(process.cwd(), 'public')));
+
 
 // Generate random password
 function generateSecurePassword(length = 12) {
@@ -488,6 +490,12 @@ app.use("/db", cachedDbRoutes);
 
 /*--- Query Cached Database Routes ---*/
 app.use("/query", queryCachedDbRoutes);
+
+// The "catch-all" handler: for any request that doesn't
+// match one above, send back React's index.html file.
+app.get('*', (req, res) => {
+  res.sendFile(path.resolve(process.cwd(), 'public', 'index.html'));
+});
 
 // ===== STARTING THE SERVER =====
 app.listen(PORT_NO, () => {

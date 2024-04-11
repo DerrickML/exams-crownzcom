@@ -9,3 +9,9 @@ yarn.lock
 # data/uace_attempts.csv
 # data/coupons.csv
 /data
+
+# Ignore everything in the public/ directory
+public/*
+
+# But do not ignore the images/ directory
+!public/images/

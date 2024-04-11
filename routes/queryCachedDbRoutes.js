@@ -1,5 +1,7 @@
 import express from "express";
 import fs from "fs";
+import { promises as fsPromises } from "fs";
+import { constants as fsConstants } from "fs";
 import { parse } from "csv-parse/sync";
 import path from "path";
 import dotenv from "dotenv";
@@ -38,7 +40,7 @@ router.get(
 
       const userRecord = records.find(
         (record) =>
-          record.UserId === userId && record.SubjectName === subjectName,
+          record.UserId === userId && record.SubjectName === subjectName
       );
 
       if (userRecord) {
@@ -52,16 +54,116 @@ router.get(
       }
     } catch (error) {
       console.error(error);
-      res.status(500).send(`Error reading user history: ${error}`);
+      res
+        .status(500)
+        .send(`Error Fecthing user ${subjectName} exam history: ${error}`);
     }
-  },
+  }
 );
 
+// // Update User Questions History
+// router.post("/updateQtnHistory1", async (req, res) => {
+//   const { userId, subjectName, questionsJSON, educationLevel } = req.body;
+
+//   //Determine education level
+//   if (educationLevel === "PLE") {
+//     fileName = PLE_ATTEMPTED_QUESTIONS_FILE;
+//   } else if (educationLevel === "UCE") {
+//     fileName = UCE_ATTEMPTED_QUESTIONS_FILE;
+//   } else if (educationLevel === "UACE") {
+//     fileName = UACE_ATTEMPTED_QUESTIONS_FILE;
+//   } else {
+//     throw new Error("Education level not provided");
+//   }
+
+//   console.log("Update Question History Education Level: ", educationLevel);
+//   questionsJSON ? console.log("Not empty") : console.log("Empty Question JSON");
+
+//   try {
+//     // let data = await readFile(csvFilePath, { encoding: 'utf8' });
+//     const filePath = path.join(dirname, "..", "data", fileName);
+//     let records;
+
+//     // Check if the file exists and read, otherwise initialize records as an empty array
+//     if (fs.existsSync(filePath)) {
+//       const data = fs.readFileSync(filePath, "utf8");
+//       records = parse(data, { columns: true, skip_empty_lines: true });
+//     } else {
+//       records = [];
+//     }
+
+//     const existingRecordIndex = records.findIndex(
+//       (record) =>
+//         record.UserId === userId && record.SubjectName === subjectName,
+//     );
+
+//     if (existingRecordIndex >= 0) {
+//       // Merge with existing record
+//       let existingQuestionsJSON = JSON.parse(
+//         records[existingRecordIndex].QuestionsJSON,
+//       );
+
+//       // Iterate through each category in the existing data and update with new questions
+//       for (const category in questionsJSON) {
+//         if (existingQuestionsJSON[category]) {
+//           existingQuestionsJSON[category] = [
+//             ...new Set([
+//               ...existingQuestionsJSON[category],
+//               ...questionsJSON[category],
+//             ]),
+//           ];
+//         } else {
+//           existingQuestionsJSON[category] = questionsJSON[category];
+//         }
+//       }
+
+//       records[existingRecordIndex] = {
+//         UserId: userId,
+//         SubjectName: subjectName,
+//         QuestionsJSON: JSON.stringify(questionsJSON),
+//         Timestamp: new Date().toISOString(),
+//       };
+//     } else {
+//       // Append new record
+//       records.push({
+//         UserId: userId,
+//         SubjectName: subjectName,
+//         QuestionsJSON: JSON.stringify(questionsJSON),
+//         Timestamp: new Date().toISOString(),
+//       });
+//       console.log("Appending new user record.");
+//     }
+
+//     // Convert records to CSV format
+//     stringify(records, { header: true }, (err, output) => {
+//       if (err) {
+//         console.error(`Error stringifying CSV: ${err}`);
+//         res.status(500).send(`Error stringifying CSV: ${err}`);
+//         return;
+//       }
+
+//       // Write updated data to CSV file
+//       fs.writeFile(filePath, output, (writeErr) => {
+//         if (writeErr) {
+//           console.error(`Error writing to CSV: ${writeErr}`);
+//           res.status(500).send(`Error writing to CSV: ${writeErr}`);
+//           return;
+//         }
+//         res.send("User history updated successfully");
+//       });
+//     });
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).send(`Error updating user history: ${error}`);
+//   }
+// });
+
+//********
 // Update User Questions History
 router.post("/updateQtnHistory", async (req, res) => {
   const { userId, subjectName, questionsJSON, educationLevel } = req.body;
 
-  //Determine education level
+  // Determine education level
   if (educationLevel === "PLE") {
     fileName = PLE_ATTEMPTED_QUESTIONS_FILE;
   } else if (educationLevel === "UCE") {
@@ -69,34 +171,38 @@ router.post("/updateQtnHistory", async (req, res) => {
   } else if (educationLevel === "UACE") {
     fileName = UACE_ATTEMPTED_QUESTIONS_FILE;
   } else {
-    throw new Error("Education level not provided");
+    return res.status(400).send("Education level not provided");
   }
 
-  console.log("Update Question History Education Level: ", educationLevel);
-  questionsJSON ? console.log("Not empty") : console.log("Empty Question JSON");
+  const filePath = path.join(dirname, "..", "data", fileName);
 
   try {
-    // let data = await readFile(csvFilePath, { encoding: 'utf8' });
-    const filePath = path.join(dirname, "..", "data", fileName);
+    let fileExists = true;
+    try {
+      await fsPromises.access(filePath, fsConstants.F_OK);
+    } catch (error) {
+      fileExists = false;
+    }
+
     let records;
 
     // Check if the file exists and read, otherwise initialize records as an empty array
-    if (fs.existsSync(filePath)) {
-      const data = fs.readFileSync(filePath, "utf8");
+    if (fileExists) {
+      const data = await fsPromises.readFile(filePath, "utf8");
       records = parse(data, { columns: true, skip_empty_lines: true });
     } else {
       records = [];
     }
 
     const existingRecordIndex = records.findIndex(
-      (record) =>
-        record.UserId === userId && record.SubjectName === subjectName,
+      (record) => record.UserId === userId && record.SubjectName === subjectName
     );
 
+    // logic to update or append records
     if (existingRecordIndex >= 0) {
       // Merge with existing record
       let existingQuestionsJSON = JSON.parse(
-        records[existingRecordIndex].QuestionsJSON,
+        records[existingRecordIndex].QuestionsJSON
       );
 
       // Iterate through each category in the existing data and update with new questions
@@ -130,29 +236,25 @@ router.post("/updateQtnHistory", async (req, res) => {
       console.log("Appending new user record.");
     }
 
-    // Convert records to CSV format
-    stringify(records, { header: true }, (err, output) => {
-      if (err) {
-        console.error(`Error stringifying CSV: ${err}`);
-        res.status(500).send(`Error stringifying CSV: ${err}`);
-        return;
-      }
-
-      // Write updated data to CSV file
-      fs.writeFile(filePath, output, (writeErr) => {
-        if (writeErr) {
-          console.error(`Error writing to CSV: ${writeErr}`);
-          res.status(500).send(`Error writing to CSV: ${writeErr}`);
-          return;
-        }
-        res.send("User history updated successfully");
+    // Convert records to CSV format and write to file
+    const csvString = await new Promise((resolve, reject) => {
+      stringify(records, { header: true }, (err, output) => {
+        if (err) reject(err);
+        else resolve(output);
       });
     });
+
+    await fsPromises.writeFile(filePath, csvString);
+
+    res.send({updated:`Updated user ${subjectName} exam history successfully`});
   } catch (error) {
-    console.log(error);
-    res.status(500).send(`Error updating user history: ${error}`);
+    console.error(`Error Updating user ${subjectName} exam history: ${error}`);
+    res
+      .status(500)
+      .send(`Error Updating user ${subjectName} exam history: ${error}`);
   }
 });
+//********
 
 // Route to validate a coupon
 router.get("/validate-coupon", async (req, res) => {
