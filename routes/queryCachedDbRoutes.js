@@ -52,7 +52,7 @@ router.get(
       }
     } catch (error) {
       console.error(error);
-      res.status(500).send("Error reading user history: ", error);
+      res.status(500).send(`Error reading user history: ${error}`);
     }
   },
 );
