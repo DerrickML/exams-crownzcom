@@ -11,7 +11,7 @@ yarn.lock
 /data
 
 # Ignore everything in the public/ directory
-public/*
+# public/*
 
 # But do not ignore the images/ directory
-!public/images/
+# !public/images/
