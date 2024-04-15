@@ -300,7 +300,7 @@ router.get("/validate-coupon", async (req, res) => {
     const usageCount = couponUsages.length;
 
     if (usageCount >= parseInt(coupon.UsageLimit)) {
-      return res.status(400).json({ message: "Coupon usage limit exceeded for this user" });
+      return res.status(400).json({ message: "Coupon usage limit exceeded for this student" });
     }
 
     // Coupon is valid, return its details
