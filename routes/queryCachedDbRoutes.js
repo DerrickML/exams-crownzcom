@@ -295,7 +295,7 @@ router.get("/validate-coupon", async (req, res) => {
       Query.equal("UserID", userId)
     ]);
 
-    // Filter to count usages of this specific coupon code
+    // Filter to count usages of this specific coupon code provided
     const couponUsages = queryResponse.documents.filter(doc => doc.CouponCode === couponCode);
     const usageCount = couponUsages.length;
 
