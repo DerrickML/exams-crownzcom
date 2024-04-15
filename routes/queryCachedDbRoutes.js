@@ -246,7 +246,7 @@ router.post("/updateQtnHistory", async (req, res) => {
 
     await fsPromises.writeFile(filePath, csvString);
 
-    res.send({updated:`Updated user ${subjectName} exam history successfully`});
+    res.send({ updated: `Updated user ${subjectName} exam history successfully` });
   } catch (error) {
     console.error(`Error Updating user ${subjectName} exam history: ${error}`);
     res
@@ -292,6 +292,7 @@ router.get("/validate-coupon", async (req, res) => {
       couponDetails: {
         DiscountType: coupon.DiscountType,
         DiscountValue: coupon.DiscountValue,
+        Description: coupon.Description,
       },
     });
   } catch (error) {
