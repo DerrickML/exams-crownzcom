@@ -35,6 +35,7 @@ const database_id = "655f5a677fcf3b1d8b79";
 const studentTable_id = "657065f7dddd996bf19b";
 const parentsTable_id = "65706739032c0962d0a9";
 const couponTable_id = "65d74fb70f64c0e46f36";
+const couponUsagesTable_id = '65dc4317b1e6e5bebdb9'
 
 export {
   client,
@@ -48,5 +49,6 @@ export {
   studentTable_id,
   parentsTable_id,
   couponTable_id,
+  couponUsagesTable_id,
   Query,
 };

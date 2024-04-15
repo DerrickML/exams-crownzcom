@@ -61,7 +61,7 @@ router.post("/card-payment", async (req, res) => {
           Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
         },
         json: {
-          ...req.body, // You can send required data from your frontend
+          ...req.body, // Required data from your frontend
         },
       })
       .json();

@@ -9,6 +9,13 @@ import { promisify } from "util";
 import { createObjectCsvWriter } from "csv-writer";
 import { stringify } from "csv-stringify";
 import { fileURLToPath } from "url";
+import {
+  databases,
+  database_id,
+  couponTable_id,
+  couponUsagesTable_id,
+  Query,
+} from "../appwriteServerConfig.js";
 
 dotenv.config();
 const PLE_ATTEMPTED_QUESTIONS_FILE = process.env.PLE_ATTEMPTED_QUESTIONS_FILE;
@@ -246,7 +253,7 @@ router.post("/updateQtnHistory", async (req, res) => {
 
     await fsPromises.writeFile(filePath, csvString);
 
-    res.send({updated:`Updated user ${subjectName} exam history successfully`});
+    res.send({ updated: `Updated user ${subjectName} exam history successfully` });
   } catch (error) {
     console.error(`Error Updating user ${subjectName} exam history: ${error}`);
     res
@@ -259,9 +266,10 @@ router.post("/updateQtnHistory", async (req, res) => {
 // Route to validate a coupon
 router.get("/validate-coupon", async (req, res) => {
   const couponCode = req.query.code;
+  const userId = req.query.userId;
 
-  if (!couponCode) {
-    return res.status(400).json({ message: "Coupon code is required" });
+  if (!couponCode || !userId) {
+    return res.status(400).json({ message: "Coupon code and user ID are required" });
   }
 
   try {
@@ -271,9 +279,7 @@ router.get("/validate-coupon", async (req, res) => {
     const coupon = records.find((c) => c.CouponCode === couponCode);
 
     if (!coupon || coupon.IsActive.toLowerCase() !== "true") {
-      return res
-        .status(404)
-        .json({ message: "Coupon not found or not active" });
+      return res.status(404).json({ message: "Coupon not found or not active" });
     }
 
     const now = new Date();
@@ -281,9 +287,20 @@ router.get("/validate-coupon", async (req, res) => {
     const expiryDate = new Date(coupon.ExpiryDate);
 
     if (now < validFrom || now > expiryDate) {
-      return res
-        .status(400)
-        .json({ message: "Coupon is not valid at this time" });
+      return res.status(400).json({ message: "Coupon is not valid at this time" });
+    }
+
+    // Fetch all usages for this user
+    const queryResponse = await databases.listDocuments(database_id, "couponUsagesTable_id", [
+      Query.equal("UserID", userId)
+    ]);
+
+    // Filter to count usages of this specific coupon code
+    const couponUsages = queryResponse.documents.filter(doc => doc.CouponCode === couponCode);
+    const usageCount = couponUsages.length;
+
+    if (usageCount >= parseInt(coupon.UsageLimit)) {
+      return res.status(400).json({ message: "Coupon usage limit exceeded for this user" });
     }
 
     // Coupon is valid, return its details
@@ -292,6 +309,7 @@ router.get("/validate-coupon", async (req, res) => {
       couponDetails: {
         DiscountType: coupon.DiscountType,
         DiscountValue: coupon.DiscountValue,
+        Description: coupon.Description,
       },
     });
   } catch (error) {
