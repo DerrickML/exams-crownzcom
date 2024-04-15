@@ -303,7 +303,7 @@ router.get("/validate-coupon", async (req, res) => {
       return res.status(400).json({ message: "Coupon usage limit exceeded for this student" });
     }
 
-    // Coupon is valid, return its details
+    // Coupon is valid, return its details to front end
     res.json({
       message: "Coupon is valid",
       couponDetails: {
