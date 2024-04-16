@@ -76,7 +76,7 @@ router.post("/card-payment", async (req, res) => {
 //Verify transaction status
 router.get("/verify-payment/:transactionId", async (req, res) => {
   const { transactionId } = req.params; // Use transactionId from the route params
-
+  console.log("transactionId: ", transactionId);
   try {
     const response = await flw.Transaction.verify({ id: transactionId });
 
