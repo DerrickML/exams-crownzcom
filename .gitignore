@@ -6,6 +6,7 @@ yarn.lock
 # Docker related files
 Dockerfile
 passcodeHashConfig.js
+server.log
 
 # DATA FILES
 # data/ple_attempts.csv

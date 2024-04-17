@@ -1,5 +1,6 @@
 // Importing required modules
 import crypto from "crypto";
+import winston from "winston";
 import express, { response } from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
@@ -31,6 +32,17 @@ const PORT_NO = process.env.PORT_NO || 3009;
 // Initializing Express app
 const app = express();
 
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.File({ filename: 'server.log' })
+  ]
+});
+
 /************************************************/
 /*From any origin*/
 // Use cors middleware with wildcard origin
@@ -40,6 +52,16 @@ app.use(
   }),
 );
 /************************************************/
+
+// Logging Middleware
+app.use((req, res, next) => {
+  logger.info(`${req.method} ${req.url}`, {
+    method: req.method,
+    url: req.url,
+    ipAddress: req.ip
+  });
+  next();
+});
 
 // Support for JSON-encoded bodies
 app.use(bodyParser.json());
@@ -495,6 +517,28 @@ app.use("/query", queryCachedDbRoutes);
 // app.get('*', (req, res) => {
 //   res.sendFile(path.resolve(process.cwd(), 'public', 'index.html'));
 // });
+
+// Testing Route
+app.get('/test-error', (req, res) => {
+  throw new Error('Something went wrong!');
+  res.send('Hello, world!');
+});
+
+// Error Handling Middleware
+app.use((err, req, res, next) => {
+  logger.error('Error logged', {
+    error: err.message,
+    stack: err.stack,
+    method: req.method,
+    url: req.url,
+    ipAddress: req.ip
+  });
+
+  res.status(500).send({
+    error: 'Internal Server Error',
+    message: err.message
+  });
+});
 
 // ===== STARTING THE SERVER =====
 app.listen(PORT_NO, '0.0.0.0', () => {
