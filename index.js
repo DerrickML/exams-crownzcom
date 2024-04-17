@@ -304,7 +304,7 @@ app.post("/create-student", async (req, res) => {
 });
 
 /*ROUTE 3: (AUTH 3) Create user account for the Next of Kin*/
-app.post("/create-next-of-kin", async (req, res) => {
+app.post("/create-guardian", async (req, res) => {
   try {
     const { email, firstName, lastName, phone, signupMethod, studentName } =
       req.body;
