@@ -8,6 +8,7 @@ Dockerfile
 passcodeHashConfig.js
 
 #LOGGING FILE
+/logs
 server.log
 
 # DATA FILES
