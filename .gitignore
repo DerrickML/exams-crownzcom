@@ -6,6 +6,8 @@ yarn.lock
 # Docker related files
 Dockerfile
 passcodeHashConfig.js
+
+#LOGGING FILE
 server.log
 
 # DATA FILES
