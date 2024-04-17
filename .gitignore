@@ -3,6 +3,10 @@ node_modules
 .github/dependabot.yml
 yarn.lock
 
+# Docker related files
+Dockerfile
+passcodeHashConfig.js
+
 # DATA FILES
 # data/ple_attempts.csv
 # data/uce_attempts.csv
