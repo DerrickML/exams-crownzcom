@@ -26,7 +26,7 @@ import mtnMomoRoutes from "./routes/mtnMomoRoutes.js";
 
 dotenv.config();
 
-const PORT_NO = process.env.PORT_NO || 3009
+const PORT_NO = process.env.PORT_NO || 3009;
 
 // Initializing Express app
 const app = express();
@@ -53,7 +53,6 @@ app.use(express.json());
 // Serving static files from 'public' directory
 app.use(express.static(path.join(process.cwd(), "public")));
 // app.use(express.static(path.join(process.cwd(), 'public')));
-
 
 // Generate random password
 function generateSecurePassword(length = 12) {
