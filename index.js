@@ -497,6 +497,6 @@ app.use("/query", queryCachedDbRoutes);
 // });
 
 // ===== STARTING THE SERVER =====
-app.listen(PORT_NO, () => {
+app.listen(PORT_NO, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT_NO}`);
 });
