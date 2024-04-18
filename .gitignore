@@ -3,6 +3,10 @@ node_modules
 .github/dependabot.yml
 yarn.lock
 
+#CODE-SANDBOX
+.codesandbox
+.devcontainer
+
 # Docker related files
 Dockerfile
 passcodeHashConfig.js
