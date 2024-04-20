@@ -93,21 +93,40 @@ function generateSecurePassword(length = 12) {
 // Function to create email message
 function createKinEmailMessage(kinName, studentName, password, kinEmail) {
   return `
-    <div style="font-family: Arial, sans-serif; color: #333;">
-      <h2 style="color: #4A90E2;">Welcome to Student Progress Tracker!</h2>
-      <p>Hello <strong>${kinName}</strong>,</p>
-      <p>We are excited to inform you that <strong>${studentName}</strong> has added you as their Next of Kin on our platform. This role is crucial in monitoring and supporting their educational journey.</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome to Exam Prep Tutor!</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; color: #333;">
+<div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 20px; border: 1px solid #dddddd;">
+  <div style="background-color: #007bff; color: #ffffff; padding: 10px 20px; text-align: center;">
+    <h1 style="margin: 0;">Welcome to Exam Prep Tutor!</h1>
+  </div>
+  <div style="padding: 20px;">
+    <p>Hello <strong>${kinName}</strong>,</p>
+    <p>We are excited to inform you that <strong>${studentName}</strong> has added you as their Guardian on the Exam Prep Tutor platform. This role is crucial in monitoring and supporting their educational journey.</p>
+    <div style="background-color: #ffffff; padding: 20px; border: 1px solid #dddddd;">
       <p>Your account details are as follows:</p>
-      <ul>
-        <li>Email: <strong>${kinEmail}</strong></li>
-        <li>Password: <strong>${password}</strong> (Please change this on your first login)</li>
-      </ul>
-      <p>As a Next of Kin, you'll have access to view their academic progress, including quiz and exam scores. This is a great opportunity to stay involved and offer support where needed.</p>
-      <p>Should you have any questions or require assistance, please don't hesitate to contact us.</p>
-      <p>Best regards,</p>
-      <p><strong>The Student Progress Tracker Team</strong></p>
+      <p><strong>Email:</strong> ${kinEmail}</p>
+      <p><strong>Password:</strong> ${password} (Please change this on your first login)</p>
     </div>
-  `;
+    <p>As a Guardian, you'll have access to view their academic progress, including quiz and exam scores. This is a great opportunity to stay involved and offer support where needed.</p>
+    <p>Should you have any questions or require assistance, please don't hesitate to contact us.</p>
+    <a href="https://exampreptutor.com/" style="background-color: #007bff; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 5px; display: inline-block;">Sign In to Dashboard</a>
+  </div>
+  <div style="background-color: #007bff; color: #ffffff; text-align: center; padding: 10px 20px; font-size: 0.8em;">
+    <p>Best regards,</p>
+    <p>Exam Prep Tutor Team</p>
+  </div>
+</div>
+</body>
+</html>
+
+`;
+
 }
 
 //Funtion to create kin document in kin table
@@ -394,7 +413,7 @@ app.post("/create-guardian", async (req, res) => {
         );
         await sendEmail(
           email,
-          "Welcome to Student Progress Tracker!",
+          "Welcome to Exam Prep Tutor!",
           emailMessage,
         );
       } catch (emailError) {
@@ -471,7 +490,7 @@ app.post("/update-account", async (req, res) => {
 });
 
 /*ROUTE 6: Alert Next of Kin about Exam Attempt*/
-app.post("/alert-next-of-kin", async (req, res) => {
+app.post("/alert-guardian", async (req, res) => {
   try {
     const {
       studentName,
@@ -485,19 +504,40 @@ app.post("/alert-next-of-kin", async (req, res) => {
 
     // Create the email body
     const emailBody = `
-      <h1>Exam Attempt Alert</h1>
-      <p>Dear ${kinNames},</p>
-      <p>This is to inform you that your ward, ${studentName}, has attempted an exam.</p>
-      <p>Exam Details:</p>
-      <ul>
-        <li><b>Student Name:</b> ${studentName}</li>
-        <li><b>Education Level:</b> ${educationLevel}</li>
-        <li><b>Subject Name:</b> ${subjectName}</li>
-        <li><b>Exam Score:</b> ${examScore}</li>
-        <li><b>Exam Date and Time:</b> ${examDateTime}</li>
-      </ul>
-      <p>Thank you for your attention.</p>
-    `;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exam Results Notification</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; color: #333;">
+<div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 20px; border: 1px solid #dddddd;">
+  <div style="background-color: #007bff; color: #ffffff; padding: 10px 20px; text-align: center;">
+    <h1 style="margin: 0;">Exam Results Update</h1>
+  </div>
+  <div style="padding: 20px;">
+    <p>Dear <strong>${kinNames}</strong>,</p>
+    <p>We are delighted to share the latest exam results for <strong>${studentName}</strong>.</p>
+    <div style="background-color: #ffffff; padding: 20px; border: 1px solid #dddddd;">
+      <p><strong>Education Level:</strong> ${educationLevel}</p>
+      <p><strong>Subject:</strong> ${subjectName}</p>
+      <p><strong>Exam Score:</strong> ${examScore}</p>
+      <p><strong>Exam Date and Time:</strong> ${examDateTime}</p>
+    </div>
+    <p>To view more details and track ongoing performance, please sign in to your dashboard:</p>
+    <a href="https://exampreptutor.com/" style="background-color: #007bff; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 5px; display: inline-block;">Sign In to Dashboard</a>
+  </div>
+  <div style="background-color: #007bff; color: #ffffff; text-align: center; padding: 10px 20px; font-size: 0.8em;">
+    <p>Best regards,</p>
+    <p>Exam Prep Tutor Team</p>
+  </div>
+</div>
+</body>
+</html>
+`;
+
+    console.log('Exam Attempted: Alerting Guardian');
 
     // Send the email
     await sendEmail(kinEmail, "Exam Attempt Alert", emailBody);
