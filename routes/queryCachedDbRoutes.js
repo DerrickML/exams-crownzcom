@@ -34,37 +34,40 @@ router.get(
   "/getQtnHistory/:userId/:subjectName/:educationLevel",
   async (req, res) => {
     const { userId, subjectName, educationLevel } = req.params;
-    if (educationLevel === "PLE") {
-      fileName = PLE_ATTEMPTED_QUESTIONS_FILE;
-    } else {
-      throw new Error("Education level not provided");
-    }
-
-    const filePath = path.join(dirname, "..", "data", fileName);
-
-    try {
-      const data = await readFile(filePath, "utf8");
-      const records = parse(data, { columns: true, skip_empty_lines: true });
-
-      const userRecord = records.find(
-        (record) =>
-          record.UserId === userId && record.SubjectName === subjectName
-      );
-
-      if (userRecord) {
-        res.json({
-          questionsJSON: JSON.parse(userRecord.QuestionsJSON || "{}"),
-          timestamp: userRecord.Timestamp || null,
-        });
-      } else {
-        // No history found for this user and subject
-        res.json({ questionsJSON: {}, timestamp: null });
+    if (subjectName && educationLevel && userId) {
+      if (educationLevel === "PLE") {
+        fileName = PLE_ATTEMPTED_QUESTIONS_FILE;
       }
-    } catch (error) {
-      console.error(error);
-      res
-        .status(500)
-        .send(`Error Fecthing user ${subjectName} exam history: ${error}`);
+      const filePath = path.join(dirname, "..", "data", fileName);
+
+      try {
+        const data = await readFile(filePath, "utf8");
+        const records = parse(data, { columns: true, skip_empty_lines: true });
+
+        const userRecord = records.find(
+          (record) =>
+            record.UserId === userId && record.SubjectName === subjectName
+        );
+
+        if (userRecord) {
+          res.json({
+            questionsJSON: JSON.parse(userRecord.QuestionsJSON || "{}"),
+            timestamp: userRecord.Timestamp || null,
+          });
+        } else {
+          // No history found for this user and subject
+          res.json({ questionsJSON: {}, timestamp: null });
+        }
+      } catch (error) {
+        console.error(error);
+        res
+          .status(500)
+          .send(`Error Fecthing user ${subjectName} exam history: ${error}`);
+      }
+    }
+    else {
+      // throw new Error("Education level not provided");
+      res.json(new Error)
     }
   }
 );
