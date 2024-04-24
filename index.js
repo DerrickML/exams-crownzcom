@@ -1,6 +1,6 @@
 // Importing required modules
 import crypto from "crypto";
-import 'winston-daily-rotate-file';
+import "winston-daily-rotate-file";
 import winston from "winston";
 import express, { response } from "express";
 import bodyParser from "body-parser";
@@ -35,22 +35,20 @@ const PORT_NO = process.env.PORT_NO || 3009;
 const app = express();
 
 const dailyRotateFileTransport = new winston.transports.DailyRotateFile({
-  filename: 'logs/server-%DATE%.log',
-  datePattern: 'YYYY-MM-DD',
+  filename: "logs/server-%DATE%.log",
+  datePattern: "YYYY-MM-DD",
   zippedArchive: true,
-  maxSize: '20m',
-  maxFiles: '14d'
+  maxSize: "20m",
+  maxFiles: "14d",
 });
 
 const logger = winston.createLogger({
-  level: 'info',
+  level: "info",
   format: winston.format.combine(
     winston.format.timestamp(),
-    winston.format.json()
+    winston.format.json(),
   ),
-  transports: [
-    dailyRotateFileTransport
-  ]
+  transports: [dailyRotateFileTransport],
 });
 
 /************************************************/
@@ -68,7 +66,7 @@ app.use((req, res, next) => {
   logger.info(`${req.method} ${req.url}`, {
     method: req.method,
     url: req.url,
-    ipAddress: req.ip
+    ipAddress: req.ip,
   });
   next();
 });
@@ -127,7 +125,6 @@ function createKinEmailMessage(kinName, studentName, password, kinEmail) {
 </html>
 
 `;
-
 }
 
 //Funtion to create kin document in kin table
@@ -412,11 +409,7 @@ app.post("/create-guardian", async (req, res) => {
           password,
           email,
         );
-        await sendEmail(
-          email,
-          "Welcome to Exam Prep Tutor!",
-          emailMessage,
-        );
+        await sendEmail(email, "Welcome to Exam Prep Tutor!", emailMessage);
       } catch (emailError) {
         console.error("Email sending failed:", emailError);
         throw emailError;
@@ -538,7 +531,7 @@ app.post("/alert-guardian", async (req, res) => {
 </html>
 `;
 
-    console.log('Exam Attempted: Alerting Guardian');
+    console.log("Exam Attempted: Alerting Guardian");
 
     // Send the email
     await sendEmail(kinEmail, "Exam Attempt Alert", emailBody);
@@ -572,28 +565,28 @@ app.use("/exam/", examRoutes);
 // });
 
 // Testing Route
-app.get('/test-error', (req, res) => {
-  throw new Error('Something went wrong!');
-  res.send('Hello, world!');
+app.get("/test-error", (req, res) => {
+  throw new Error("Something went wrong!");
+  res.send("Hello, world!");
 });
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
-  logger.error('Error logged', {
+  logger.error("Error logged", {
     error: err.message,
     stack: err.stack,
     method: req.method,
     url: req.url,
-    ipAddress: req.ip
+    ipAddress: req.ip,
   });
 
   res.status(500).send({
-    error: 'Internal Server Error',
-    message: err.message
+    error: "Internal Server Error",
+    message: err.message,
   });
 });
 
 // ===== STARTING THE SERVER =====
-app.listen(PORT_NO, '0.0.0.0', () => {
+app.listen(PORT_NO, "0.0.0.0", () => {
   console.log(`Server is running on port ${PORT_NO}`);
 });
