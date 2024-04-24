@@ -25,6 +25,7 @@ import cachedDbRoutes from "./routes/cachedDatabase.js";
 import queryCachedDbRoutes from "./routes/queryCachedDbRoutes.js";
 import flutterwaveRoutes from "./routes/flutterwaveRoutes.js";
 import mtnMomoRoutes from "./routes/mtnMomoRoutes.js";
+import examRoutes from "./routes/examRoutes.js";
 
 dotenv.config();
 
@@ -560,6 +561,9 @@ app.use("/db", cachedDbRoutes);
 
 /*--- Query Cached Database Routes ---*/
 app.use("/query", queryCachedDbRoutes);
+
+/*--- Query to for exams ---*/
+app.use("/exam/", examRoutes);
 
 // The "catch-all" handler: for any request that doesn't
 // match one above, send back React's index.html file.
