@@ -4,6 +4,13 @@ import { fileURLToPath } from 'url';
 import { Router } from "express";
 import dotenv from "dotenv";
 import {
+    databases,
+    database_id,
+    studentMarksTable_id,
+    pointsTable_id,
+    Query,
+} from "../appwriteServerConfig.js";
+import {
     client,
     account,
     databasesQ,
@@ -15,59 +22,12 @@ import {
     Permission,
     Role,
     QueryQ,
-} from "../examsAppwriteConfig.js";
+} from "../examsAppwriteConfig.js"; //Questions DB
 
 const router = Router();
 const PORT_NO = process.env.PORT_NO || 3009;
 
-router.get("/fetch-exam", async (req, res) => {
-    const { subjectName, userId, educationLevel } = req.query
-
-    console.log("Request bodey: " + JSON.stringify(req.query));
-    // Check if the passcode is correct
-    if (!subjectName || !userId || !educationLevel) {
-        return res.status(400).json({ message: "Exam processing failed. Missing required fields." });
-    }
-
-    try {
-        const questionsData = await fetchQuestionsForSubject(subjectName);
-
-        // console.log(questionsData);
-
-        // Extract category IDs dynamically from questionsData
-        const categoriesToInclude = questionsData.map(category => category.category);
-
-        // Fetch the user's question history
-        const userHistory = await getAttemptedQuestions(userId, subjectName, educationLevel);
-
-        // Select random questions based on various parameters
-        const randomQuestions = selectRandomQuestions(
-            questionsData,
-            categoriesToInclude,
-            subjectName,
-            userHistory,
-            userId,
-            educationLevel
-        );
-
-        // Sort questions by category
-        randomQuestions.categoriesWithQuestions.sort((a, b) => a.category - b.category);
-
-        // Update the question history with the new random questions
-        await updateQuestionHistory(randomQuestions.updatedUserHistory);
-
-        console.log("Sending back the generated exam");
-
-        // Return the sorted random questions
-        res.status(200).json({ questions: randomQuestions.categoriesWithQuestions });
-
-    } catch (error) {
-        console.log('Error fetching exam:', error);
-        res.status(500).json({ message: "An error occurred while fetching the exam." });
-    }
-
-});
-
+// ==================== FUNCTIONS ====================
 const fetchQuestionsForSubject = async (subject) => {
     try {
         let collection_id;
@@ -282,6 +242,181 @@ const updateQuestionHistory = async (selectedQuestionsJSON) => {
 const isEitherOrFormat = async (question) => {
     return question.hasOwnProperty('either') && question.hasOwnProperty('or');
 };
+
+/**
+ * Send Email to guardian
+*/
+const sendEmailToNextOfKin = async (userInfo, subjectName, examScore, examDateTime) => {
+    const studentName = `${userInfo.firstName} ${userInfo.lastName}${userInfo.otherName ? ` ${userInfo.otherName}` : ''}`;
+    const educationLevel = userInfo.educationLevel;
+    const kinNames = `${userInfo.kinFirstName} ${userInfo.kinLastName}`;
+    const kinEmail = userInfo.kinEmail;
+
+    // Send the information to the backend
+    fetch(`http://localhost:${PORT_NO}/alert-guardian`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            studentName,
+            educationLevel,
+            kinNames,
+            kinEmail,
+            subjectName,
+            examScore,
+            examDateTime,
+        }),
+    })
+        .then(response => {
+            // console.log('Alerting Guardian: ', response);
+            // Handle the response from the backend
+            // ...
+        })
+        .catch(error => {
+            console.error('Failed to send email notification', error);
+        });
+};
+
+/**
+ * Update user points
+ */
+// Save userPoints function (example)
+const saveUserPointsToDatabase = async (points, userId) => {
+    // Update points in the database
+    try {
+        let updatedPoints
+        const response = await databases.listDocuments(database_id, pointsTable_id, [
+            Query.equal("UserID", userId),
+        ]);
+        // console.log('Checking points table: ', response)
+        if (response.documents.length > 0) { //TODO: If table user points doesn't exist, create new document
+            const documentId = response.documents[0].$id //Points document id to be updated
+            let currentPoints = response.documents[0].PointsBalance
+            updatedPoints = currentPoints - points
+            if (updatedPoints >= 0) {
+                // console.log('points document id: ', documentId)
+
+                //update Points table
+                const updateResponse = await databases.updateDocument(database_id, pointsTable_id, documentId, { PointsBalance: updatedPoints })
+
+                console.log('Points updated: ', updateResponse);
+
+                return updateResponse.PointsBalance
+            }
+        }
+
+    } catch (error) {
+        console.error("Error updating user points:", error);
+        throw new Error("Error updating user points", error);
+    }
+};
+
+// ==================== ROUTES =================
+/**
+ * Route to send exam data to client
+ */
+router.get("/fetch-exam", async (req, res) => {
+    const { subjectName, userId, educationLevel } = req.query
+
+    console.log("Request bodey: " + JSON.stringify(req.query));
+    // Check if the passcode is correct
+    if (!subjectName || !userId || !educationLevel) {
+        return res.status(400).json({ message: "Exam processing failed. Missing required fields." });
+    }
+
+    try {
+        const questionsData = await fetchQuestionsForSubject(subjectName);
+
+        // console.log(questionsData);
+
+        // Extract category IDs dynamically from questionsData
+        const categoriesToInclude = questionsData.map(category => category.category);
+
+        // Fetch the user's question history
+        const userHistory = await getAttemptedQuestions(userId, subjectName, educationLevel);
+
+        // Select random questions based on various parameters
+        const randomQuestions = selectRandomQuestions(
+            questionsData,
+            categoriesToInclude,
+            subjectName,
+            userHistory,
+            userId,
+            educationLevel
+        );
+
+        // Sort questions by category
+        randomQuestions.categoriesWithQuestions.sort((a, b) => a.category - b.category);
+
+        // Update the question history with the new random questions
+        await updateQuestionHistory(randomQuestions.updatedUserHistory);
+
+        console.log("Sending back the generated exam");
+
+        // Return the sorted random questions
+        res.status(200).json({ questions: randomQuestions.categoriesWithQuestions });
+
+    } catch (error) {
+        console.log('Error fetching exam:', error);
+        res.status(500).json({ message: "An error occurred while fetching the exam." });
+    }
+
+});
+
+/**
+ * Route submit exam to DB
+ */
+router.post('/submit', async (req, res) => {
+    const { studID, subject, marks, dateTime, results, kinEmail, studInfo } = req.body;
+    try {
+        const userResultsData = {
+            studID: studID,
+            marks: marks,
+            subject: subject,
+            results: results,
+            dateTime: dateTime
+        }
+
+        //Save results to database
+        console.log('Saving results to database');
+        const result = await databases.createDocument(
+            database_id,
+            studentMarksTable_id,
+            "unique()",
+            userResultsData
+        );
+
+        //Send email to guardian if exists
+        console.log('Sending email to guardian about student results');
+        if (kinEmail) {
+            await sendEmailToNextOfKin(studInfo, subject, marks, dateTime);
+        }
+
+        // Update user Points
+        let points = await saveUserPointsToDatabase(1, studID);
+
+        //Retrieve all student results
+        let allResults = null;
+        try {
+            const response = await databases.listDocuments(
+                database_id,
+                studentMarksTable_id,
+                [Query.equal("studID", studID), Query.limit(500)]
+            );
+
+            allResults = response.documents;
+        } catch (e) {
+            console.log('Failed to fetch all results from database', e);
+        }
+
+        //Respond back to client
+        res.status(200).json({ allResults: allResults, points: points });
+
+    } catch (err) {
+        res.status(500).json({ message: 'Failed to save exam results data to database', error: error });
+    }
+});
 
 
 export default router;
