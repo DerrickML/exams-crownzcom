@@ -75,7 +75,7 @@ const fetchQuestionsForSubject = async (subject) => {
             delete obj.$collectionId
         });
 
-        console.log("Finished fetching question data");
+        console.log("Finished fetching question data: ", questionData);
         return questionData;
     } catch (error) {
         console.error("Error fetching data:", error);
@@ -319,7 +319,7 @@ const saveUserPointsToDatabase = async (points, userId) => {
 router.get("/fetch-exam", async (req, res) => {
     const { subjectName, userId, educationLevel } = req.query
 
-    console.log("Request bodey: " + JSON.stringify(req.query));
+    console.log("Request body: " + JSON.stringify(req.query));
     // Check if the passcode is correct
     if (!subjectName || !userId || !educationLevel) {
         return res.status(400).json({ message: "Exam processing failed. Missing required fields." });
@@ -352,7 +352,7 @@ router.get("/fetch-exam", async (req, res) => {
         // Update the question history with the new random questions
         await updateQuestionHistory(randomQuestions.updatedUserHistory);
 
-        console.log("Sending back the generated exam");
+        console.log("Sending back the generated exam: ", randomQuestions.categoriesWithQuestions);
 
         // Return the sorted random questions
         res.status(200).json({ questions: randomQuestions.categoriesWithQuestions });
