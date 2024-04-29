@@ -207,11 +207,11 @@ router.get("/validate-coupon", async (req, res) => {
     const couponUsages = queryResponse.documents.filter(doc => doc.CouponCode === couponCode);
     const usageCount = couponUsages.length;
 
-    if (!userLabel.includes('admin')) {
-      if (usageCount >= parseInt(coupon.UsageLimit)) {
-        return res.status(400).json({ message: "Coupon usage limit exceeded for this student" });
-      }
+    // if (userLabel.includes('admin') || !userLabel.includes('staff')) {
+    if (usageCount >= parseInt(coupon.UsageLimit)) {
+      return res.status(400).json({ message: "Coupon usage limit exceeded for this student" });
     }
+    // }
 
     // Coupon is valid, return its details to front end
     res.json({
