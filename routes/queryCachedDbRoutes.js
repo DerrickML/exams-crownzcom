@@ -173,6 +173,8 @@ router.post("/updateQtnHistory", async (req, res) => {
 router.get("/validate-coupon", async (req, res) => {
   const couponCode = req.query.code;
   const userId = req.query.userId;
+  const userLabel = req.query.userLabel;
+  console.log('user label: ' + userLabel)
 
   if (!couponCode || !userId) {
     return res.status(400).json({ message: "Coupon code and user ID are required" });
@@ -205,8 +207,10 @@ router.get("/validate-coupon", async (req, res) => {
     const couponUsages = queryResponse.documents.filter(doc => doc.CouponCode === couponCode);
     const usageCount = couponUsages.length;
 
-    if (usageCount >= parseInt(coupon.UsageLimit)) {
-      return res.status(400).json({ message: "Coupon usage limit exceeded for this student" });
+    if (!userLabel.includes('admin')) {
+      if (usageCount >= parseInt(coupon.UsageLimit)) {
+        return res.status(400).json({ message: "Coupon usage limit exceeded for this student" });
+      }
     }
 
     // Coupon is valid, return its details to front end
