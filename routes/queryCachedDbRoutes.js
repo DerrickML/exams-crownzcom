@@ -28,6 +28,35 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
 
+//Retrieve all students from students.json file
+router.get("/students", async (req, res) => {
+  const dataPath = path.join(dirname, '..', 'data', 'students.json');
+
+  try {
+    // Check if the file exists
+    if (!fs.existsSync(dataPath)) {
+      return res.status(404).json({ message: "No student data found." });
+    }
+
+    // Read the data from the file
+    const data = fs.readFileSync(dataPath, 'utf-8');
+
+    // Parse the data to JSON
+    const students = JSON.parse(data);
+
+    // Check if the data is empty
+    if (students.length === 0) {
+      return res.status(404).json({ message: "No student data available." });
+    }
+
+    // Send the data back to the client
+    res.json(students);
+  } catch (error) {
+    console.error("Error accessing student data:", error);
+    res.status(500).json({ message: "Internal server error while fetching student data." });
+  }
+});
+
 // Retrieve User Questions History
 //TODO: Fetch Question History From Database
 router.get(
@@ -208,9 +237,9 @@ router.get("/validate-coupon", async (req, res) => {
     const usageCount = couponUsages.length;
 
     // if (userLabel.includes('admin') || !userLabel.includes('staff')) {
-    if (usageCount >= parseInt(coupon.UsageLimit)) {
-      return res.status(400).json({ message: "Coupon usage limit exceeded for this student" });
-    }
+    // if (usageCount >= parseInt(coupon.UsageLimit)) {
+    //   return res.status(400).json({ message: "Coupon usage limit exceeded for this student" });
+    // }
     // }
 
     // Coupon is valid, return its details to front end
