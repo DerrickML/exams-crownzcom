@@ -18,6 +18,8 @@ import {
   database_id,
   studentTable_id,
   parentsTable_id,
+
+  adminTable_id,
   Query,
 } from "./appwriteServerConfig.js";
 import { sendEmail } from "./emailConfig.js";
@@ -147,6 +149,28 @@ async function createKinDocument(kinID, firstName, lastName, email, phone) {
     // res.status(500).json({ error: `Alert: ${error.message}` });
   }
 }
+
+//Funtion to create kin document in kin table
+async function createAdminDocument(adminId, firstName, lastName, email, phone) {
+  try {
+    await databases.createDocument(database_id, adminTable_id, "unique()", {
+      adminID: adminId,
+      firstName: firstName,
+      lastName: lastName,
+      email: email || null,
+      phone: phone || null,
+      accountStatus: "Active",
+    });
+
+    console.log("Admin added successfully");
+    return true;
+  } catch (error) {
+    console.error(error);
+    // throw error;
+    // res.status(500).json({ error: `Alert: ${error.message}` });
+  }
+}
+
 // Function to update User account labels
 async function updateLabel(userId, labels) {
   try {
@@ -170,7 +194,8 @@ async function queryUser(userId, table_id, queryKey) {
   try {
     queryKey === "studID"
       ? console.log("On student query")
-      : console.log("On kin query");
+      : console.log("On kin or Admin query");
+
     console.log("Database id: " + database_id);
     console.log("Table id: " + table_id);
     const details = await databases.listDocuments(database_id, table_id, [
@@ -196,6 +221,7 @@ function constructResponse(user, userDetails, kinDetails, labels, isStudent) {
     email: user.email || null,
     labels: labels || [],
     kinID: user.kinID || null,
+    adminID: user.adminID || null,
     // Set default values for other properties
     otherName: null,
     gender: null,
@@ -223,6 +249,10 @@ function constructResponse(user, userDetails, kinDetails, labels, isStudent) {
     response.kinEmail = kin.email || null;
     response.kinPhone = kin.phone || null;
   }
+
+  /**
+   * TODO: Add admin response details if required
+   */
 
   return response;
 }
@@ -316,6 +346,10 @@ app.post("/get-user-details", async (req, res) => {
     } else if (labels.includes("kin")) {
       console.log("User is a kin");
       userDetails = await queryUser(userId, parentsTable_id, "kinID");
+    }
+    else if (labels.includes("admin")) {
+      console.log("User is an Admin");
+      userDetails = await queryUser(userId, adminTable_id, "adminID");
     }
 
     const response = constructResponse(
@@ -427,7 +461,84 @@ app.post("/create-guardian", async (req, res) => {
   }
 });
 
-/*ROUTE 4: (AUTH 3) Route for updating user labels */
+/*ROUTE 4: (AUTH 3) Create user account for an Admin*/
+app.post("/create-admin", async (req, res) => {
+  try {
+    const { email, firstName, lastName, phone, signupMethod } =
+      req.body;
+    if (!email && !phone) {
+      return res
+        .status(400)
+        .send(
+          "Please provide either an email or phone number for the admin.",
+        );
+    }
+    let password = generateSecurePassword();
+    let response, accountResponse, adminId;
+    const adminLabel = ["admin", "staff"];
+
+    //Check for signup method and use that for signup
+    if (signupMethod === "email") {
+      try {
+        response = await users.create(
+          "unique()",
+          email,
+          phone,
+          password,
+          firstName,
+        );
+        console.log("Admin ID: ", response.$id);
+        await updateLabel(response.$id, adminLabel);
+        accountResponse = await getUserDetails(response.$id);
+        adminId = response.$id;
+        console.log("Email account resoonse (ID expected): ", adminId);
+      } catch (error) {
+        console.log("Failed to create Admin account:" + error);
+        throw error.message;
+      }
+    } else if (signupMethod === "phone") {
+      try {
+        response = await c_account.createPhoneSession("unique()", phone);
+        console.log("Admin ID From Phone: ", response.userId);
+        await updateLabel(response.userId, adminLabel);
+        accountResponse = await getUserDetails(response.userId);
+        adminId = response.userId;
+        console.log("Phone account resoonse (ID expected): ", adminId);
+      } catch (error) {
+        console.log("Failed to create Admin account:" + error);
+        res.status(500).send(error.message);
+        throw error.message;
+      }
+    }
+
+    // Attempt to send an email if it's provided
+    // if (email) {
+    //   try {
+    //     const emailMessage = createKinEmailMessage(
+    //       firstName,
+    //       studentName,
+    //       password,
+    //       email,
+    //     );
+    //     await sendEmail(email, "Welcome to Exam Prep Tutor!", emailMessage);
+    //   } catch (emailError) {
+    //     console.error("Email sending failed:", emailError);
+    //     throw emailError;
+    //   }
+    // }
+
+    //Add Admin accout to Admin collection
+    await createAdminDocument(adminId, firstName, lastName, email, phone); //accountResponse parameter contains Admin
+
+    console.log("Admin account created:", accountResponse);
+    res.json(accountResponse);
+  } catch (error) {
+    console.error("Error in creating Admin account:", error);
+    res.status(500).send(`Internal Server Error: ${error}`);
+  }
+});
+
+/*ROUTE 5: (AUTH 3) Route for updating user labels */
 app.post("/update-label", async (req, res) => {
   try {
     const userId = req.body.userId; // Assuming userId is passed in the request body
@@ -440,7 +551,7 @@ app.post("/update-label", async (req, res) => {
   }
 });
 
-/*ROUTE 5: (AUTH 3) Route for updating user acount details */
+/*ROUTE 6: (AUTH 3) Route for updating user acount details */
 app.post("/update-account", async (req, res) => {
   try {
     const userId = req.body.userId;
