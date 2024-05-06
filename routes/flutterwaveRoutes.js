@@ -44,7 +44,7 @@ router.post("/mobile-money-pay", async (req, res) => {
 
   try {
     const response = await flw.MobileMoney.uganda(payload);
-    console.log("Payment Response: ", JSON.stringify(response));
+    console.log(`${network} Payment Response: `, JSON.stringify(response));
     res.json({ response, tx_ref: payload.tx_ref });
   } catch (error) {
     console.log(error);
