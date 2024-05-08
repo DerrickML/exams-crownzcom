@@ -3,6 +3,7 @@ import fs from "fs";
 import { promises as fsPromises } from "fs";
 import { constants as fsConstants } from "fs";
 import { parse } from "csv-parse/sync";
+import cors from "cors";
 import path from "path";
 import dotenv from "dotenv";
 import { promisify } from "util";
@@ -17,6 +18,16 @@ import {
   Query,
 } from "../appwriteServerConfig.js";
 
+/************************************************/
+/*From any origin*/
+// Use cors middleware with wildcard origin
+app.use(
+  cors({
+    origin: "*",
+  }),
+);
+/************************************************/
+
 dotenv.config();
 const PLE_ATTEMPTED_QUESTIONS_FILE = process.env.PLE_ATTEMPTED_QUESTIONS_FILE;
 const UCE_ATTEMPTED_QUESTIONS_FILE = process.env.UCE_ATTEMPTED_QUESTIONS_FILE;
@@ -30,7 +41,7 @@ const readFile = promisify(fs.readFile);
 
 //Retrieve all students from students.json file
 router.get("/students", async (req, res) => {
-  const dataPath = path.join(dirname, '..', 'data', 'students.json');
+  const dataPath = path.join(dirname, "..", "data", "students.json");
 
   try {
     // Check if the file exists
@@ -39,7 +50,7 @@ router.get("/students", async (req, res) => {
     }
 
     // Read the data from the file
-    const data = fs.readFileSync(dataPath, 'utf-8');
+    const data = fs.readFileSync(dataPath, "utf-8");
 
     // Parse the data to JSON
     const students = JSON.parse(data);
@@ -53,7 +64,9 @@ router.get("/students", async (req, res) => {
     res.json(students);
   } catch (error) {
     console.error("Error accessing student data:", error);
-    res.status(500).json({ message: "Internal server error while fetching student data." });
+    res
+      .status(500)
+      .json({ message: "Internal server error while fetching student data." });
   }
 });
 
@@ -75,7 +88,7 @@ router.get(
 
         const userRecord = records.find(
           (record) =>
-            record.UserId === userId && record.SubjectName === subjectName
+            record.UserId === userId && record.SubjectName === subjectName,
         );
 
         if (userRecord) {
@@ -93,12 +106,11 @@ router.get(
           .status(500)
           .send(`Error Fecthing user ${subjectName} exam history: ${error}`);
       }
-    }
-    else {
+    } else {
       // throw new Error("Education level not provided");
-      res.json(new Error)
+      res.json(new Error());
     }
-  }
+  },
 );
 
 // Update User Questions History
@@ -138,14 +150,15 @@ router.post("/updateQtnHistory", async (req, res) => {
     }
 
     const existingRecordIndex = records.findIndex(
-      (record) => record.UserId === userId && record.SubjectName === subjectName
+      (record) =>
+        record.UserId === userId && record.SubjectName === subjectName,
     );
 
     // logic to update or append records
     if (existingRecordIndex >= 0) {
       // Merge with existing record
       let existingQuestionsJSON = JSON.parse(
-        records[existingRecordIndex].QuestionsJSON
+        records[existingRecordIndex].QuestionsJSON,
       );
 
       // Iterate through each category in the existing data and update with new questions
@@ -189,7 +202,9 @@ router.post("/updateQtnHistory", async (req, res) => {
 
     await fsPromises.writeFile(filePath, csvString);
 
-    res.send({ updated: `Updated user ${subjectName} exam history successfully` });
+    res.send({
+      updated: `Updated user ${subjectName} exam history successfully`,
+    });
   } catch (error) {
     console.error(`Error Updating user ${subjectName} exam history: ${error}`);
     res
@@ -203,10 +218,12 @@ router.get("/validate-coupon", async (req, res) => {
   const couponCode = req.query.code;
   const userId = req.query.userId;
   const userLabel = req.query.userLabel;
-  console.log('user label: ' + userLabel)
+  console.log("user label: " + userLabel);
 
   if (!couponCode || !userId) {
-    return res.status(400).json({ message: "Coupon code and user ID are required" });
+    return res
+      .status(400)
+      .json({ message: "Coupon code and user ID are required" });
   }
 
   try {
@@ -216,7 +233,9 @@ router.get("/validate-coupon", async (req, res) => {
     const coupon = records.find((c) => c.CouponCode === couponCode);
 
     if (!coupon || coupon.IsActive.toLowerCase() !== "true") {
-      return res.status(404).json({ message: "Coupon not found or not active" });
+      return res
+        .status(404)
+        .json({ message: "Coupon not found or not active" });
     }
 
     const now = new Date();
@@ -224,16 +243,22 @@ router.get("/validate-coupon", async (req, res) => {
     const expiryDate = new Date(coupon.ExpiryDate);
 
     if (now < validFrom || now > expiryDate) {
-      return res.status(400).json({ message: "Coupon is not valid at this time" });
+      return res
+        .status(400)
+        .json({ message: "Coupon is not valid at this time" });
     }
 
     // Fetch all usages for this user
-    const queryResponse = await databases.listDocuments(database_id, couponUsagesTable_id, [
-      Query.equal("UserID", userId)
-    ]);
+    const queryResponse = await databases.listDocuments(
+      database_id,
+      couponUsagesTable_id,
+      [Query.equal("UserID", userId)],
+    );
 
     // Filter to count usages of this specific coupon code provided
-    const couponUsages = queryResponse.documents.filter(doc => doc.CouponCode === couponCode);
+    const couponUsages = queryResponse.documents.filter(
+      (doc) => doc.CouponCode === couponCode,
+    );
     const usageCount = couponUsages.length;
 
     // if (userLabel.includes('admin') || !userLabel.includes('staff')) {
