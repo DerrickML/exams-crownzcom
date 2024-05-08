@@ -368,11 +368,12 @@ router.get("/fetch-exam", async (req, res) => {
  * Route submit exam to DB
  */
 router.post('/submit', async (req, res) => {
-    const { studID, subject, marks, dateTime, results, kinEmail, studInfo } = req.body;
+    const { studID, subject, marks, dateTime, results, totalPossibleMarks, kinEmail, studInfo } = req.body;
     try {
         const userResultsData = {
             studID: studID,
             marks: marks,
+            totalPossibleMarks: totalPossibleMarks ? totalPossibleMarks : null,
             subject: subject,
             results: results,
             dateTime: dateTime
