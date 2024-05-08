@@ -18,6 +18,8 @@ import {
   Query,
 } from "../appwriteServerConfig.js";
 
+// Initializing Express app
+const app = express();
 /************************************************/
 /*From any origin*/
 // Use cors middleware with wildcard origin

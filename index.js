@@ -18,7 +18,6 @@ import {
   database_id,
   studentTable_id,
   parentsTable_id,
-
   adminTable_id,
   Query,
 } from "./appwriteServerConfig.js";
@@ -346,8 +345,7 @@ app.post("/get-user-details", async (req, res) => {
     } else if (labels.includes("kin")) {
       console.log("User is a kin");
       userDetails = await queryUser(userId, parentsTable_id, "kinID");
-    }
-    else if (labels.includes("admin")) {
+    } else if (labels.includes("admin")) {
       console.log("User is an Admin");
       userDetails = await queryUser(userId, adminTable_id, "adminID");
     }
@@ -464,14 +462,11 @@ app.post("/create-guardian", async (req, res) => {
 /*ROUTE 4: (AUTH 3) Create user account for an Admin*/
 app.post("/create-admin", async (req, res) => {
   try {
-    const { email, firstName, lastName, phone, signupMethod } =
-      req.body;
+    const { email, firstName, lastName, phone, signupMethod } = req.body;
     if (!email && !phone) {
       return res
         .status(400)
-        .send(
-          "Please provide either an email or phone number for the admin.",
-        );
+        .send("Please provide either an email or phone number for the admin.");
     }
     let password = generateSecurePassword();
     let response, accountResponse, adminId;
