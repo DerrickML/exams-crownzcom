@@ -22,6 +22,9 @@ server.log
 # data/coupons.csv
 /data
 
+#Folders/Files to ignore
+/tests
+
 # Ignore everything in the public/ directory
 public/*
 

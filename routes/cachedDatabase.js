@@ -9,6 +9,8 @@ import {
   databases,
   database_id,
   studentTable_id,
+  parentsTable_id,
+  adminTable_id,
   studentMarksTable_id,
   pointsTable_id,
   Query,
@@ -98,6 +100,55 @@ router.get("/fetch-students", async (req, res) => {
   }
 });
 
+router.get('/fetch-users', async (req, res) => {
+  try {
+    const guardians = await fetchUsers(parentsTable_id);
+    const students = await fetchUsers(studentTable_id);
+    const staff = await fetchUsers(adminTable_id);
+
+    const formatUserData = (users, type) => users.map(user => ({
+      userId: type === 'student' ? user.studID : type === 'guardian' ? user.kinID : user.adminID,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      otherName: user.otherName,
+      type: type,
+      ...(type === 'student' && { educationLevel: user.educationLevel, dateCreated: user.dateCreated || user.$createdAt }) // Conditional addition for students
+    }));
+
+    const data = {
+      guardians: formatUserData(guardians, 'guardian'),
+      students: formatUserData(students, 'student'),
+      staff: formatUserData(staff, 'admin')
+    };
+
+    // File handling
+    const dataPath = path.join(dirname, "..", "data", "users.json");
+    if (fs.existsSync(dataPath)) {
+      console.log('File exists. Rewriting the entire content.');
+      fs.writeFileSync(dataPath, JSON.stringify(data, null, 2), 'utf8');
+    } else {
+      console.log('File does not exist. Creating new file.');
+      fs.writeFileSync(dataPath, JSON.stringify(data, null, 2), 'utf8');
+    }
+
+    res.send({ message: 'Users fetched and saved successfully', data });
+  } catch (error) {
+    console.error('Error in fetching or saving user data:', error);
+    res.status(500).send({ error: 'Failed to fetch or save user data' });
+  }
+});
+
+/* ============ FUNCTIONS ============ */
+const fetchUsers = async (collectionId) => {
+  try {
+    const response = await databases.listDocuments(database_id, collectionId, [Query.limit(10000)],);
+    return response.documents;
+  } catch (error) {
+    console.error('Failed to fetch documents from:', collectionId, error);
+    return [];
+  }
+};
+
 const fetchAndProcessAllStudentData = async () => {
   try {
     const students = await databases.listDocuments(
@@ -136,11 +187,20 @@ const fetchAndProcessAllStudentData = async () => {
           schoolName: student.schoolName,
           schoolAddress: student.schoolAddress,
           pointsBalance: pointsBalance,
-          Results: results.documents.map((result) => ({
-            subject: result.subject,
-            score: result.marks,
-            resultDetails: result.results,
-            dateTime: new Date(result.$createdAt).toLocaleString("en-US", {
+          label: student.label,
+          accountCreatedDate: student.createdDate ?
+            new Date(student.createdDate).toLocaleString("en-US", {
+              timeZone: "Africa/Nairobi",
+              hour12: false,
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            })
+            :
+            new Date(student.$createdAt).toLocaleString("en-US", {
               timeZone: "Africa/Nairobi",
               hour12: false,
               year: "numeric",
@@ -150,7 +210,34 @@ const fetchAndProcessAllStudentData = async () => {
               minute: "2-digit",
               second: "2-digit",
             }),
+          Results: results.documents.map((result) => ({
+            subject: result.subject,
+            score: result.marks,
+            resultDetails: result.results,
+            dateTime: result.dateTime ?
+              new Date(result.dateTime).toLocaleString("en-US", {
+                timeZone: "Africa/Nairobi",
+                hour12: false,
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              })
+              :
+              new Date(result.$createdAt).toLocaleString("en-US", {
+                timeZone: "Africa/Nairobi",
+                hour12: false,
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              }),
           })),
+          accountStatus: student.accountStatus,
         };
       }),
     );

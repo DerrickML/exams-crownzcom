@@ -138,6 +138,7 @@ async function createKinDocument(kinID, firstName, lastName, email, phone) {
       email: email || null,
       phone: phone || null,
       accountStatus: "Active",
+      createdDate: new Date(),
     });
 
     console.log("Parent added successfully");
