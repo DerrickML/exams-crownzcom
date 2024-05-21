@@ -75,12 +75,119 @@ const fetchQuestionsForSubject = async (subject) => {
             delete obj.$collectionId
         });
 
-        console.log("Finished fetching question data: ", questionData);
+        console.log("Finished fetching question data: ");
         return questionData;
     } catch (error) {
         console.error("Error fetching data:", error);
     }
 }
+
+// const selectRandomQuestions = (questionsData, categoryIds, subjectName, userHistory, userId, educationLevel) => {
+//     let updatedUserHistory = {
+//         userId,
+//         subjectName,
+//         questionsJSON: { ...userHistory?.questionsJSON },  // Clone the existing history
+//         educationLevel,
+//     };
+
+//     let categoriesWithQuestions = categoryIds.map((categoryId) => {
+//         const category = questionsData.find((cat) => cat.category === categoryId);
+//         if (!category) {
+//             console.warn(`Category ${categoryId} not found`);
+//             return null;
+//         }
+
+//         // Retrieve attempted question IDs for this category from userHistory
+//         let attemptedQuestionIds = userHistory?.questionsJSON?.[categoryId] || [];
+//         let allQuestionIds = category.questions.map((question) => question.id);
+
+//         // Reset the attempted question IDs if they exceed or match all available questions
+//         if (attemptedQuestionIds.length >= allQuestionIds.length) {
+//             attemptedQuestionIds = [];
+//         }
+
+//         // Filter available questions that haven't been attempted
+//         let availableQuestions = category.questions.filter((question) => {
+//             let questionId = isEitherOrFormat(question) ? `${category.questions.indexOf(question)}` : question.id;
+//             return !attemptedQuestionIds.includes(questionId);
+//         });
+
+//         let numQuestions = 1;  // Default number of questions
+//         if (subjectName === 'sst-ple' && (categoryId === 36 || categoryId === 51)) {
+//             numQuestions = 5;
+//         }
+
+//         // If available questions are less than numQuestions, reset attempted history
+//         if (availableQuestions.length < numQuestions) {
+//             attemptedQuestionIds = [];  // Reset the history to ensure enough questions
+//             availableQuestions = category.questions;  // Reset available questions
+//         }
+
+//         // Randomly select questions from the available list
+//         let selectedQuestions = [...availableQuestions].sort(() => 0.5 - Math.random()).slice(0, numQuestions);
+
+//         // Handle insufficient new questions
+//         if (selectedQuestions.length < numQuestions) {
+//             let questionsNeeded = numQuestions - selectedQuestions.length;
+//             let additionalQuestions = [];
+
+//             // Select from the attempted question list to fill the gap
+//             for (let i = 0; i < questionsNeeded; i++) {
+//                 if (attemptedQuestionIds.length > 0) {
+//                     let oldQuestionId = attemptedQuestionIds.shift();  // Remove the oldest question
+//                     let oldQuestion = category.questions.find((q) => q.id === oldQuestionId);
+//                     if (oldQuestion) {
+//                         additionalQuestions.push(oldQuestion);
+//                     }
+//                 }
+//             }
+
+//             selectedQuestions = selectedQuestions.concat(additionalQuestions);
+
+//             // Clear the history for this category if all questions are used
+//             if (attemptedQuestionIds.length === 0) {
+//                 updatedUserHistory.questionsJSON[categoryId] = [];
+//             }
+//         }
+
+//         // Update the questions with additional details
+//         const updatedQuestions = selectedQuestions.map((question) => {
+//             const updatedQuestion = { ...question };
+
+//             if (isEitherOrFormat(question)) {
+//                 updatedQuestion.id = `${category.questions.indexOf(question)}`;
+//             }
+
+//             // Handle either/or questions with sub-questions
+//             if (question.either && question.either.sub_questions) {
+//                 updatedQuestion.either.sub_questions = question.either.sub_questions.map((subQ, index) => ({
+//                     ...subQ,
+//                     id: `${question.either.id}_sub_${index}`,
+//                 }));
+//             }
+
+//             if (question.or && question.or.sub_questions) {
+//                 updatedQuestion.or.sub_questions = question.or.sub_questions.map((subQ, index) => ({
+//                     ...subQ,
+//                     id: `${question.or.id}_sub_${index}`,
+//                 }));
+//             }
+
+//             return updatedQuestion;
+//         });
+
+//         // Append the IDs of newly selected questions to updatedUserHistory
+//         const newQuestionIds = updatedQuestions.map((question) => question.id);
+//         updatedUserHistory.questionsJSON[categoryId] = [...new Set([...attemptedQuestionIds, ...newQuestionIds])];
+
+//         return { ...category, questions: updatedQuestions };
+//     });
+
+//     return {
+//         updatedUserHistory,
+//         categoriesWithQuestions: categoriesWithQuestions.filter((cat) => cat !== null),  // Remove nulls
+//     };
+// };
 
 const selectRandomQuestions = (questionsData, categoryIds, subjectName, userHistory, userId, educationLevel) => {
     let updatedUserHistory = {
@@ -108,7 +215,7 @@ const selectRandomQuestions = (questionsData, categoryIds, subjectName, userHist
 
         // Filter available questions that haven't been attempted
         let availableQuestions = category.questions.filter((question) => {
-            let questionId = isEitherOrFormat(question) ? `${category.questions.indexOf(question)}` : question.id;
+            let questionId = question.id;  // Keep original id
             return !attemptedQuestionIds.includes(questionId);
         });
 
@@ -154,22 +261,23 @@ const selectRandomQuestions = (questionsData, categoryIds, subjectName, userHist
         const updatedQuestions = selectedQuestions.map((question) => {
             const updatedQuestion = { ...question };
 
-            if (isEitherOrFormat(question)) {
-                updatedQuestion.id = `${category.questions.indexOf(question)}`;
-            }
+            // Comment out the modification of `id` attributes
+            // if (isEitherOrFormat(question)) {
+            //     updatedQuestion.id = `${category.questions.indexOf(question)}`;
+            // }
 
             // Handle either/or questions with sub-questions
             if (question.either && question.either.sub_questions) {
                 updatedQuestion.either.sub_questions = question.either.sub_questions.map((subQ, index) => ({
                     ...subQ,
-                    id: `${question.either.id}_sub_${index}`,
+                    // id: `${question.either.id}_sub_${index}`,
                 }));
             }
 
             if (question.or && question.or.sub_questions) {
                 updatedQuestion.or.sub_questions = question.or.sub_questions.map((subQ, index) => ({
                     ...subQ,
-                    id: `${question.or.id}_sub_${index}`,
+                    // id: `${question.or.id}_sub_${index}`,
                 }));
             }
 
@@ -300,7 +408,7 @@ const saveUserPointsToDatabase = async (points, userId) => {
                 //update Points table
                 const updateResponse = await databases.updateDocument(database_id, pointsTable_id, documentId, { PointsBalance: updatedPoints })
 
-                console.log('Points updated: ', updateResponse);
+                // console.log('Points updated: ', updateResponse);
 
                 return updateResponse.PointsBalance
             }
@@ -355,7 +463,7 @@ router.get("/fetch-exam", async (req, res) => {
         console.log("Sending back the generated exam: ", randomQuestions.categoriesWithQuestions);
 
         // Return the sorted random questions
-        res.status(200).json({ questions: randomQuestions.categoriesWithQuestions });
+        res.status(200).json({ questions: randomQuestions.categoriesWithQuestions, allQtns: questionsData });
 
     } catch (error) {
         console.log('Error fetching exam:', error);
