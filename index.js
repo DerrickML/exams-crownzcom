@@ -32,7 +32,7 @@ dotenv.config();
 
 const PORT_NO = process.env.PORT_NO || 3009;
 
-// Initializing Express app
+// Initializing Express App
 const app = express();
 
 const dailyRotateFileTransport = new winston.transports.DailyRotateFile({
