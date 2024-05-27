@@ -650,6 +650,23 @@ app.post("/alert-guardian", async (req, res) => {
   }
 });
 
+/* ROUTE 7: Password Reset */
+app.get("/reset-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+    console.log('Email to reset: ', email);
+    const result = await account.createRecovery(
+      'derrickmal123@gmail.com', // email
+      'https://exampreptutor.com/password-reset' // url
+    );
+    console.log('Password Reset: ', result);
+    res.status(200).json({ message: "Email sent successfully for password reset", Results: result });
+  } catch (err) {
+    console.error("Error resetting password:", err);
+    res.status(500).json({ error: "Failed to reset password", errorMessage: err.message });
+  };
+});
+
 /*--- FLUTTERWAVE SUPPORTED ROUTES ---*/
 app.use("/flutterwave", flutterwaveRoutes);
 
