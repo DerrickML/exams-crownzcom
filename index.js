@@ -56,11 +56,13 @@ const logger = winston.createLogger({
 /************************************************/
 /*From any origin*/
 // Use cors middleware with wildcard origin
-app.use(
-  cors({
-    origin: "*",
-  }),
-);
+// app.use(
+//   cors({
+//     origin: "*",
+//   }),
+// );
+// Use the CORS middleware
+app.use(cors());
 /************************************************/
 
 // Logging Middleware
