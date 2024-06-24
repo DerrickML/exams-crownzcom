@@ -26,6 +26,7 @@ import {
     Role,
     QueryQ,
 } from "../examsAppwriteConfig.js"; //Questions DB
+import { eng_ple } from "../questions/questionsData.js"
 
 dotenv.config();
 
@@ -41,43 +42,54 @@ const fetchQuestionsForSubject = async (subject) => {
     try {
         console.log("Determining subject...");
         let collection_id;
+        let questions = []
+        let questionData = []
 
-        switch (subject) {
-            case "social-studies_ple":
-                collection_id = sstTablePLE_id;
-                break;
-            case "mathematics_ple":
-                collection_id = mathPLE_id;
-                break;
-            case "english-language_ple":
-                collection_id = engTbalePLE_id;
-                break;
-            case "science_ple":
-                collection_id = sciTablePLE_id;
-                break;
-            default:
-                // collection_id = null;
-                return;
+        if (subject === 'english-language_ple') { //Fetched from server
+            questions = eng_ple;
+
+            questionData = questions;
         }
-        console.log("Fetching subject questions...");
+        else { //Fetched from Appwrite database
+            switch (subject) {
+                case "social-studies_ple":
+                    collection_id = sstTablePLE_id;
+                    break;
+                case "mathematics_ple":
+                    collection_id = mathPLE_id;
+                    break;
+                // case "english-language_ple":
+                // collection_id = engTbalePLE_id;
+                // break;
+                case "science_ple":
+                    collection_id = sciTablePLE_id;
+                    break;
+                default:
+                    // collection_id = null;
+                    return;
+            }
+            console.log("Fetching subject questions...");
 
-        const response = await databasesQ.listDocuments(
-            database_idQ,
-            collection_id,
-            [Query.limit(200), Query.orderAsc("$id")]
-        );
+            const response = await databasesQ.listDocuments(
+                database_idQ,
+                collection_id,
+                [Query.limit(200), Query.orderAsc("$id")]
+            );
 
-        const questions = response.documents;
-        const questionData = questions;
+            questions = response.documents;
 
-        questionData.forEach((obj) => {
-            obj.questions = obj.questions.map((q) => JSON.parse(q));
-            delete obj.$createdAt;
-            delete obj.$updatedAt;
-            delete obj.$permissions;
-            delete obj.$databaseId;
-            delete obj.$collectionId;
-        });
+            questionData = questions;
+
+            questionData.forEach((obj) => {
+                obj.questions = obj.questions.map((q) => JSON.parse(q));
+                delete obj.$createdAt;
+                delete obj.$updatedAt;
+                delete obj.$permissions;
+                delete obj.$databaseId;
+                delete obj.$collectionId;
+            });
+
+        }
 
         console.log("Finished fetching question data: ");
         return questionData;
@@ -96,18 +108,18 @@ const selectRandomQuestions = async (subjectName, questionsData, categoryIds, us
     let categoriesWithQuestions = await Promise.all(categoryIds.map(async (categoryId) => {
         const category = questionsData.find((cat) => cat.category === categoryId);
         if (!category) {
-            console.log(`Category ${categoryId} not found`);
+            // console.log(`Category ${categoryId} not found`);
             return null;
         }
 
         let attemptedQuestionIds = qtnHistory?.questionsJSON?.[categoryId] || [];
         let allQuestionIds = category.questions.map((question) => question.id);
 
-        console.log('Attempted questions: ' + attemptedQuestionIds.length + '\n allQuestionIds: ' + allQuestionIds.length);
+        // console.log('Attempted questions: ' + attemptedQuestionIds.length + '\n allQuestionIds: ' + allQuestionIds.length);
 
         // Reset the attempted question IDs if they exceed or match all available questions
         if (attemptedQuestionIds.length >= allQuestionIds.length) {
-            console.log('Resetting attempted questions to empty array');
+            // console.log('Resetting attempted questions to empty array');
             attemptedQuestionIds = [];
             updatedQtnHistory.questionsJSON[categoryId] = [];
         }
