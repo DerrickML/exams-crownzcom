@@ -35,16 +35,16 @@ const fetchQuestionsForSubject = async (subject) => {
         console.log("Determining subject...");
 
         switch (subject) {
-            case "sst-ple":
+            case "social-studies_ple":
                 collection_id = sstTablePLE_id;
                 break;
-            case "mtc-ple":
+            case "mathematics_ple":
                 collection_id = mathPLE_id;
                 break;
-            case "eng-ple":
+            case "english-language_ple":
                 collection_id = engTbalePLE_id;
                 break;
-            case "sci-ple":
+            case "science_ple":
                 collection_id = sciTablePLE_id;
                 break;
             default:
@@ -113,8 +113,26 @@ const selectRandomQuestions = (questionsData, categoryIds, subjectName, userHist
         });
 
         let numQuestions = 1;  // Default number of questions
-        if (subjectName === 'sst-ple' && (categoryId === 36 || categoryId === 51)) {
+        if (subjectName === 'social-studies_ple' && (categoryId === 36 || categoryId === 51)) {
             numQuestions = 5;
+        }
+
+        if (subjectName === 'english-language_ple') {
+            if (categoryId === 31) {
+                numQuestions = 20;
+            }
+            if (categoryId === 1 || categoryId === 6) {
+                numQuestions = 5;
+            }
+            if (categoryId === 18) {
+                numQuestions = 3;
+            }
+            if (categoryId === 6 || categoryId === 16 || categoryId === 21 || categoryId === 23 || categoryId === 25 || categoryId === 27 || categoryId === 29) {
+                numQuestions = 2;
+            }
+            if (categoryId === 51 || categoryId === 52 || categoryId === 53 || categoryId === 54 || categoryId === 55) {
+                numQuestions = 1;
+            }
         }
 
         // If available questions are less than numQuestions, reset attempted history
