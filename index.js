@@ -48,7 +48,7 @@ const logger = winston.createLogger({
   level: "info",
   format: winston.format.combine(
     winston.format.timestamp(),
-    winston.format.json(),
+    winston.format.json()
   ),
   transports: [dailyRotateFileTransport],
 });
@@ -268,7 +268,7 @@ async function updateDocument(collectionId, documentId, data) {
       database_id,
       collectionId,
       documentId,
-      data,
+      data
     );
 
     return response;
@@ -343,7 +343,7 @@ app.post("/get-user-details", async (req, res) => {
         kinDetails = await queryUser(
           userDetails.documents[0].kinID,
           parentsTable_id,
-          "kinID",
+          "kinID"
         );
       }
     } else if (labels.includes("kin")) {
@@ -359,7 +359,7 @@ app.post("/get-user-details", async (req, res) => {
       userDetails,
       kinDetails,
       labels,
-      labels.includes("student"),
+      labels.includes("student")
     );
     res.status(200).json(response);
   } catch (error) {
@@ -376,7 +376,7 @@ app.post("/create-student", async (req, res) => {
       email,
       phone,
       password,
-      userName,
+      userName
     );
     console.log("Student details: ", response);
     res.json(response);
@@ -395,7 +395,7 @@ app.post("/create-guardian", async (req, res) => {
       return res
         .status(400)
         .send(
-          "Please provide either an email or phone number for the next of kin.",
+          "Please provide either an email or phone number for the next of kin."
         );
     }
     let password = generateSecurePassword();
@@ -410,7 +410,7 @@ app.post("/create-guardian", async (req, res) => {
           email,
           phone,
           password,
-          firstName,
+          firstName
         );
         console.log("Kin ID: ", response.$id);
         await updateLabel(response.$id, kinLabel);
@@ -443,7 +443,7 @@ app.post("/create-guardian", async (req, res) => {
           firstName,
           studentName,
           password,
-          email,
+          email
         );
         await sendEmail(email, "Welcome to Exam Prep Tutor!", emailMessage);
       } catch (emailError) {
@@ -484,7 +484,7 @@ app.post("/create-admin", async (req, res) => {
           email,
           phone,
           password,
-          firstName,
+          firstName
         );
         console.log("Admin ID: ", response.$id);
         await updateLabel(response.$id, adminLabel);
@@ -573,14 +573,14 @@ app.post("/update-account", async (req, res) => {
     //Updating User data via the Account service
     const responseAccountService = await updateAccountData(
       userId,
-      dataToUpdate,
+      dataToUpdate
     );
 
     //Updating User data stored in Collecion via database service
     const responseDocumentUpdate = await updateDocument(
       collectionID,
       documentID,
-      dataToUpdate,
+      dataToUpdate
     );
 
     res.json({
@@ -657,17 +657,22 @@ app.post("/alert-guardian", async (req, res) => {
 app.get("/reset-password", async (req, res) => {
   try {
     const { email } = req.body;
-    console.log('Email to reset: ', email);
+    console.log("Email to reset: ", email);
     const result = await account.createRecovery(
-      'derrickmal123@gmail.com', // email
-      'https://exampreptutor.com/password-reset' // url
+      "derrickmal123@gmail.com", // email
+      "https://exampreptutor.com/password-reset" // url
     );
-    console.log('Password Reset: ', result);
-    res.status(200).json({ message: "Email sent successfully for password reset", Results: result });
+    console.log("Password Reset: ", result);
+    res.status(200).json({
+      message: "Email sent successfully for password reset",
+      Results: result,
+    });
   } catch (err) {
     console.error("Error resetting password:", err);
-    res.status(500).json({ error: "Failed to reset password", errorMessage: err.message });
-  };
+    res
+      .status(500)
+      .json({ error: "Failed to reset password", errorMessage: err.message });
+  }
 });
 
 /*--- FLUTTERWAVE SUPPORTED ROUTES ---*/
