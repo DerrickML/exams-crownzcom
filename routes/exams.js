@@ -99,60 +99,89 @@ const fetchQuestionsForSubject = async (subject) => {
     }
 };
 
-const selectRandomQuestions = async (subjectName, questionsData, categoryIds, userId, qtnHistory) => {
+const selectRandomQuestions = async (subjectName, questionsData, categoryIds, collection_id, qtnHistory) => {
+    console.log('Subject: ', subjectName);
     let updatedQtnHistory = {
-        userId,
+        collection_id,
         questionsJSON: { ...qtnHistory?.questionsJSON },
     };
 
-    let categoriesWithQuestions = await Promise.all(categoryIds.map(async (categoryId) => {
+    const getNumQuestions = (subjectName, categoryId) => {
+        if (subjectName === 'social-studies_ple') {
+            if ([36, 51].includes(categoryId)) return 5;
+        }
+        if (subjectName === 'english-language_ple') {
+            if (categoryId === 31) return 20;
+            if (categoryId === 6) return 10;
+            if (categoryId === 1) return 5;
+            if (categoryId === 18) return 3;
+            if ([16, 21, 23, 25, 27, 29].includes(categoryId)) return 2;
+            if ([51, 52, 53, 54, 55].includes(categoryId)) return 1;
+        }
+        return 1;
+    };
+
+    // const updateQuestionIds = (questions, prefix) => {
+    //     return questions.map((question, index) => {
+    //         const updatedQuestion = { ...question, id: `${prefix}_${index}` };
+    //         if (question.either?.sub_questions) {
+    //             updatedQuestion.either.sub_questions = question.either.sub_questions.map((subQ, subIndex) => ({
+    //                 ...subQ,
+    //                 id: `${question.either.id}_sub_${subIndex}`
+    //             }));
+    //         }
+    //         if (question.or?.sub_questions) {
+    //             updatedQuestion.or.sub_questions = question.or.sub_questions.map((subQ, subIndex) => ({
+    //                 ...subQ,
+    //                 id: `${question.or.id}_sub_${subIndex}`
+    //             }));
+    //         }
+    //         return updatedQuestion;
+    //     });
+    // };
+    const updateQuestionIds = (questions, prefix) => {
+        return questions.map((question, index) => {
+            const updatedQuestion = {
+                ...question,
+                id: question.id ?? `${prefix}_${index}`
+            };
+
+            if (question.either?.sub_questions) {
+                updatedQuestion.either.sub_questions = question.either.sub_questions.map((subQ, subIndex) => ({
+                    ...subQ,
+                    id: subQ.id ?? `${question.either.id}_sub_${subIndex}`
+                }));
+            }
+
+            if (question.or?.sub_questions) {
+                updatedQuestion.or.sub_questions = question.or.sub_questions.map((subQ, subIndex) => ({
+                    ...subQ,
+                    id: subQ.id ?? `${question.or.id}_sub_${subIndex}`
+                }));
+            }
+
+            return updatedQuestion;
+        });
+    };
+
+    const selectQuestionsForCategory = async (categoryId) => {
         const category = questionsData.find((cat) => cat.category === categoryId);
         if (!category) {
-            // console.log(`Category ${categoryId} not found`);
+            console.log(`Category ${categoryId} not found`);
             return null;
         }
 
         let attemptedQuestionIds = qtnHistory?.questionsJSON?.[categoryId] || [];
-        let allQuestionIds = category.questions.map((question) => question.id);
+        const allQuestionIds = category.questions.map((question) => question.id);
 
-        // console.log('Attempted questions: ' + attemptedQuestionIds.length + '\n allQuestionIds: ' + allQuestionIds.length);
-
-        // Reset the attempted question IDs if they exceed or match all available questions
         if (attemptedQuestionIds.length >= allQuestionIds.length) {
             // console.log('Resetting attempted questions to empty array');
             attemptedQuestionIds = [];
             updatedQtnHistory.questionsJSON[categoryId] = [];
         }
 
-        // Filter available questions that haven't been attempted
-        let availableQuestions = category.questions.filter((question) => {
-            let questionId = question.id;
-            return !attemptedQuestionIds.includes(questionId);
-        });
-
-        let numQuestions = 1;
-
-        if (subjectName === 'social-studies_ple' && (categoryId === 36 || categoryId === 51)) {
-            numQuestions = 5;
-        }
-
-        if (subjectName === 'english-language_ple') {
-            if (categoryId === 31) {
-                numQuestions = 20;
-            }
-            if (categoryId === 1 || categoryId === 6) {
-                numQuestions = 5;
-            }
-            if (categoryId === 18) {
-                numQuestions = 3;
-            }
-            if (categoryId === 6 || categoryId === 16 || categoryId === 21 || categoryId === 23 || categoryId === 25 || categoryId === 27 || categoryId === 29) {
-                numQuestions = 2;
-            }
-            if (categoryId === 51 || categoryId === 52 || categoryId === 53 || categoryId === 54 || categoryId === 55) {
-                numQuestions = 1;
-            }
-        }
+        let availableQuestions = category.questions.filter((question) => !attemptedQuestionIds.includes(question.id));
+        const numQuestions = getNumQuestions(subjectName, categoryId);
 
         if (availableQuestions.length < numQuestions) {
             attemptedQuestionIds = [];
@@ -162,18 +191,9 @@ const selectRandomQuestions = async (subjectName, questionsData, categoryIds, us
         let selectedQuestions = [...availableQuestions].sort(() => 0.5 - Math.random()).slice(0, numQuestions);
 
         if (selectedQuestions.length < numQuestions) {
-            let questionsNeeded = numQuestions - selectedQuestions.length;
-            let additionalQuestions = [];
-
-            for (let i = 0; i < questionsNeeded; i++) {
-                if (attemptedQuestionIds.length > 0) {
-                    let oldQuestionId = attemptedQuestionIds.shift();
-                    let oldQuestion = category.questions.find((q) => q.id === oldQuestionId);
-                    if (oldQuestion) {
-                        additionalQuestions.push(oldQuestion);
-                    }
-                }
-            }
+            const additionalQuestions = attemptedQuestionIds.splice(0, numQuestions - selectedQuestions.length)
+                .map((id) => category.questions.find((q) => q.id === id))
+                .filter(Boolean);
 
             selectedQuestions = selectedQuestions.concat(additionalQuestions);
 
@@ -182,29 +202,15 @@ const selectRandomQuestions = async (subjectName, questionsData, categoryIds, us
             }
         }
 
-        const updatedQuestions = selectedQuestions.map((question) => {
-            const updatedQuestion = { ...question };
-
-            if (question.either && question.either.sub_questions) {
-                updatedQuestion.either.sub_questions = question.either.sub_questions.map((subQ, index) => ({
-                    ...subQ,
-                }));
-            }
-
-            if (question.or && question.or.sub_questions) {
-                updatedQuestion.or.sub_questions = question.or.sub_questions.map((subQ, index) => ({
-                    ...subQ,
-                }));
-            }
-
-            return updatedQuestion;
-        });
+        const updatedQuestions = updateQuestionIds(selectedQuestions, categoryId);
 
         const newQuestionIds = updatedQuestions.map((question) => question.id);
         updatedQtnHistory.questionsJSON[categoryId] = [...new Set([...attemptedQuestionIds, ...newQuestionIds])];
 
         return { ...category, questions: updatedQuestions };
-    }));
+    };
+
+    const categoriesWithQuestions = await Promise.all(categoryIds.map(selectQuestionsForCategory));
 
     return {
         updatedQtnHistory,
@@ -369,7 +375,7 @@ router.get("/fetch-exam", async (req, res) => {
         //Update the exam counter json file
         await writeCounters(counters);
 
-        res.status(200).json({ questions: randomQuestions.categoriesWithQuestions, examID: examID });
+        res.status(200).json({ allquestions: questionsData, questions: randomQuestions.categoriesWithQuestions, examID: examID });
 
     } catch (error) {
         console.log('Error fetching exam:', error);
