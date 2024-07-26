@@ -323,6 +323,10 @@ async function updateAccountData(userId, data) {
 }
 
 // ===== ROUTE HANDLERS =====
+app.get("/test", (req, res) => {
+    res.send("Test route is working!");
+});
+
 /*ROUTE 0: (AUTH 3) Home route - Simple check to confirm the server is running and used by webhooks too*/
 app.get("/", (req, res) => {
   res.send("Crownzcom Quiz/Exam says hello! 👋");
